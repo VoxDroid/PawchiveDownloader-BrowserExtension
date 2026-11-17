@@ -36,7 +36,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "check": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run lint:locales && pnpm run test",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "icons": "node scripts/render-icons.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
