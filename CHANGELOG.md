@@ -41,6 +41,8 @@ single-file version; settings and history start fresh.
 - Nine languages: English, Japanese, Korean, Simplified Chinese, Spanish,
   Brazilian Portuguese, Russian, German and French.
 - Chrome, Edge and Firefox builds from one code base (Manifest V3).
+- A hand-drawn cartoon paw icon, inked procedurally in Blender
+  (`scripts/draw-icon.py`), with a bolder drawing for toolbar sizes.
 - Request pacing that follows Pawchive's rules: at most five downloads at
   once, one new request per second, and shared cooldowns on rate limits.
 

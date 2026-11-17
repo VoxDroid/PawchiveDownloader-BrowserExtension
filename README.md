@@ -189,6 +189,7 @@ Requirements: Node.js 20 or newer and pnpm 10.
 | `pnpm test:e2e`                                        | Playwright end-to-end tests against a mocked Pawchive (run `pnpm build` first) |
 | `pnpm lint:locales`                                    | Verify every translation                                                       |
 | `pnpm lint:firefox`                                    | Mozilla's add-on linter on the Firefox build                                   |
+| `pnpm icons`                                           | Redraw the hand-drawn icon in Blender (headless) at every size                 |
 
 Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Translations live in `src/lib/i18n/locales/` and are described in [docs/TRANSLATING.md](docs/TRANSLATING.md). Releases are described in [docs/RELEASING.md](docs/RELEASING.md).
 
