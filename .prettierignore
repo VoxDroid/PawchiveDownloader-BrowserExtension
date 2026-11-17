@@ -1,0 +1,9 @@
+.output
+.wxt
+coverage
+pnpm-lock.yaml
+playwright-report
+test-results
+public/_locales
+src/lib/i18n/locales
+src/ui/icons.generated.ts

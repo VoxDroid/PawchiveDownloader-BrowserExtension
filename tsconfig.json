@@ -1,0 +1,15 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": false,
+    "types": ["svelte", "vitest/globals"]
+  },
+  "include": [".wxt/wxt.d.ts", "src/**/*", "tests/**/*", "*.config.ts"],
+  "exclude": ["node_modules", ".output", "coverage"]
+}
