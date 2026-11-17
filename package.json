@@ -30,7 +30,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:locales": "node scripts/check-locales.mjs",
-    "lint:firefox": "web-ext lint --source-dir .output/firefox-mv2 --warnings-as-errors=false",
+    "lint:firefox": "web-ext lint --source-dir .output/firefox-mv3 --self-hosted",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -64,5 +64,6 @@
   },
   "dependencies": {
     "fflate": "^0.8.3"
-  }
+  },
+  "packageManager": "pnpm@10.30.1"
 }

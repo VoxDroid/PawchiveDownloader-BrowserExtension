@@ -60,7 +60,11 @@ export async function call<K extends keyof BackgroundApi>(
   type: K,
   ...args: BackgroundApi[K]['req'] extends Record<string, never> ? [] : [BackgroundApi[K]['req']]
 ): Promise<BackgroundApi[K]['res']> {
-  const reply = (await browser.runtime.sendMessage({ type, ...(args[0] ?? {}) })) as
+  // Firefox structured-clones messages and cannot clone the proxies that
+  // Svelte state is made of; a JSON round trip gives plain data everywhere
+  // (Chrome serializes messages as JSON anyway).
+  const message = JSON.parse(JSON.stringify({ type, ...(args[0] ?? {}) })) as BackgroundRequest;
+  const reply = (await browser.runtime.sendMessage(message)) as
     Reply<BackgroundApi[K]['res']> | undefined;
   if (!reply) throw new MessageError(`No answer to ${type}`);
   if (!reply.ok) throw new MessageError(reply.error);

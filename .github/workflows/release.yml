@@ -1,0 +1,152 @@
+name: Release
+
+# Push a tag like v1.2.0 (matching package.json) to build every browser's
+# package, attach them to a GitHub release, and optionally submit them to the
+# stores.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to (re)build, e.g. v1.0.0
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build packages
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check the tag matches package.json
+        id: version
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          version="$(node -p "require('./package.json').version")"
+          if [ "v${version}" != "${tag}" ]; then
+            echo "::error::Tag ${tag} does not match package.json version ${version}"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify
+        run: |
+          pnpm lint
+          pnpm typecheck
+          pnpm lint:locales
+          pnpm test
+
+      - name: Build packages
+        run: |
+          pnpm wxt zip -b chrome
+          pnpm wxt zip -b edge
+          pnpm wxt zip -b firefox
+          ls -la .output/*.zip
+
+      - name: Lint the Firefox package
+        run: pnpm web-ext lint --source-dir .output/firefox-mv3 --self-hosted
+
+      - name: Release notes
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          awk -v v="## [${version}]" '
+            index($0, v) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "See CHANGELOG.md for details." > release-notes.md
+          fi
+          {
+            echo
+            echo "### Install"
+            echo
+            echo "- Chrome / Chromium: \`pawchive-downloader-${version}-chrome.zip\`"
+            echo "- Microsoft Edge: \`pawchive-downloader-${version}-edge.zip\`"
+            echo "- Firefox: \`pawchive-downloader-${version}-firefox.zip\`"
+            echo
+            echo "Unzip and load the folder as an unpacked extension, or follow the steps in the README."
+          } >> release-notes.md
+          cat release-notes.md
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: packages
+          path: |
+            .output/*.zip
+            release-notes.md
+
+  github-release:
+    name: GitHub release
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: packages
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: Pawchive Downloader ${{ needs.package.outputs.version }}
+          body_path: release-notes.md
+          files: .output/*.zip
+          fail_on_unmatched_files: true
+
+  stores:
+    name: Submit to stores
+    needs: package
+    # Opt in by setting the repository variable PUBLISH_TO_STORES to "true"
+    # and adding the store credentials as secrets (see docs/RELEASING.md).
+    if: vars.PUBLISH_TO_STORES == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v8
+        with:
+          name: packages
+      - name: Submit
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+        run: |
+          v="${{ needs.package.outputs.version }}"
+          pnpm wxt submit \
+            --chrome-zip ".output/pawchive-downloader-${v}-chrome.zip" \
+            --edge-zip ".output/pawchive-downloader-${v}-edge.zip" \
+            --firefox-zip ".output/pawchive-downloader-${v}-firefox.zip" \
+            --firefox-sources-zip ".output/pawchive-downloader-${v}-sources.zip"

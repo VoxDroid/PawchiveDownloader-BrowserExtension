@@ -53,9 +53,10 @@ export default defineConfig({
     ...(browser === 'firefox'
       ? {
           browser_specific_settings: {
+            gecko_android: { strict_min_version: '142.0' },
             gecko: {
               id: 'pawchive-downloader@voxdroid.github.io',
-              strict_min_version: '128.0',
+              strict_min_version: '140.0',
               data_collection_permissions: { required: ['none'] },
             },
           },
