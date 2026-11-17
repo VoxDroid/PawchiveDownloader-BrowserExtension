@@ -1,0 +1,16 @@
+{
+  "extName": {
+    "message": "Pawchive Downloader",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Descarga publicaciones, adjuntos y creadores completos de Pawchive, con ZIP, plantillas de nombres, historial y seguimiento.",
+    "description": "Store and browser description, at most 132 characters"
+  },
+  "cmdTogglePanel": {
+    "message": "Abrir o cerrar el panel de descarga"
+  },
+  "cmdDownloadPage": {
+    "message": "Descargar la publicación que estás viendo"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "extName": {
+    "message": "Pawchive Downloader",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Pawchive의 게시물, 첨부 파일, 크리에이터의 모든 게시물을 다운로드합니다. ZIP 압축, 파일 이름 템플릿, 기록, 관심 목록을 지원합니다.",
+    "description": "Store and browser description, at most 132 characters"
+  },
+  "cmdTogglePanel": {
+    "message": "다운로드 패널 열기/닫기"
+  },
+  "cmdDownloadPage": {
+    "message": "보고 있는 게시물 다운로드"
+  }
+}

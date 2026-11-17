@@ -1,7 +1,8 @@
 import type { FileCategory, Post } from '../pawchive/types';
 import type { ConflictAction, ContentFormat, DownloadMode, PreviewOnlyAction } from '../settings';
 
-export type JobStatus = 'resolving' | 'queued' | 'running' | 'paused' | 'done' | 'failed' | 'cancelled';
+export type JobStatus =
+  'resolving' | 'queued' | 'running' | 'paused' | 'done' | 'failed' | 'cancelled';
 export type ItemStatus = 'pending' | 'active' | 'done' | 'failed' | 'skipped' | 'cancelled';
 export type SkipReason = 'duplicate' | 'preview-only' | 'no-relay' | 'too-large';
 

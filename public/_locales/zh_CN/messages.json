@@ -1,0 +1,16 @@
+{
+  "extName": {
+    "message": "Pawchive Downloader",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "从 Pawchive 下载帖子、附件和创作者的全部帖子，支持 ZIP 压缩包、文件名模板、历史记录和关注列表。",
+    "description": "Store and browser description, at most 132 characters"
+  },
+  "cmdTogglePanel": {
+    "message": "打开或关闭下载面板"
+  },
+  "cmdDownloadPage": {
+    "message": "下载当前查看的帖子"
+  }
+}

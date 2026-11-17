@@ -6,7 +6,15 @@ import svelteConfig from './svelte.config.js';
 
 export default ts.config(
   {
-    ignores: ['.output/', '.wxt/', 'coverage/', 'node_modules/', 'playwright-report/', 'test-results/'],
+    ignores: [
+      '.output/',
+      '.wxt/',
+      '.cache/',
+      'coverage/',
+      'node_modules/',
+      'playwright-report/',
+      'test-results/',
+    ],
   },
   js.configs.recommended,
   ...ts.configs.recommended,
@@ -16,7 +24,10 @@ export default ts.config(
       globals: { ...globals.browser, ...globals.node, ...globals.webextensions },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'smart'],
@@ -34,6 +45,9 @@ export default ts.config(
     },
     rules: {
       'svelte/no-at-html-tags': 'error',
+      // Collections in state are replaced, never mutated in place, so plain
+      // Set and Map are reactive enough and cheaper than their Svelte twins.
+      'svelte/prefer-svelte-reactivity': 'off',
     },
   },
   {

@@ -52,7 +52,8 @@ export type TemplateToken = (typeof TEMPLATE_TOKENS)[number];
 
 const TOKEN_RE = /\{([a-z_]+)(?::([^{}]*))?\}/gi;
 
-export const DEFAULT_FOLDER_TEMPLATE = 'Pawchive/{creator} ({service})/{published:YYYY-MM-DD} {title} [{post_id}]';
+export const DEFAULT_FOLDER_TEMPLATE =
+  'Pawchive/{creator} ({service})/{published:YYYY-MM-DD} {title} [{post_id}]';
 export const DEFAULT_FILE_TEMPLATE = '{index:2}_{filename}';
 export const DEFAULT_ARCHIVE_TEMPLATE = '{creator} - {published:YYYY-MM-DD} {title} [{post_id}]';
 
@@ -85,8 +86,22 @@ function parseDate(value: string | null): Date | null {
 export function formatDate(date: Date | null, format = 'YYYY-MM-DD', utc = true): string {
   if (!date) return '';
   const parts = utc
-    ? { Y: date.getUTCFullYear(), M: date.getUTCMonth() + 1, D: date.getUTCDate(), h: date.getUTCHours(), m: date.getUTCMinutes(), s: date.getUTCSeconds() }
-    : { Y: date.getFullYear(), M: date.getMonth() + 1, D: date.getDate(), h: date.getHours(), m: date.getMinutes(), s: date.getSeconds() };
+    ? {
+        Y: date.getUTCFullYear(),
+        M: date.getUTCMonth() + 1,
+        D: date.getUTCDate(),
+        h: date.getUTCHours(),
+        m: date.getUTCMinutes(),
+        s: date.getUTCSeconds(),
+      }
+    : {
+        Y: date.getFullYear(),
+        M: date.getMonth() + 1,
+        D: date.getDate(),
+        h: date.getHours(),
+        m: date.getMinutes(),
+        s: date.getSeconds(),
+      };
   return format.replace(/YYYY|YY|MM|DD|HH|mm|ss/g, (token) => {
     switch (token) {
       case 'YYYY':
@@ -181,16 +196,25 @@ export function validateTemplate(template: string, kind: 'folder' | 'file'): str
   if (!template.trim()) return kind === 'file' ? 'empty' : null;
   if (/(^|[\\/])\.\.([\\/]|$)/.test(template)) return 'parent';
   if (unknownTokens(template).length) return 'unknown';
-  if ((template.match(/\{/g)?.length ?? 0) !== (template.match(/\}/g)?.length ?? 0)) return 'braces';
+  if ((template.match(/\{/g)?.length ?? 0) !== (template.match(/\}/g)?.length ?? 0))
+    return 'braces';
   return null;
 }
 
 /** Folder + file name for one file, safe to hand to the downloads API. */
-export function buildFilePath(folderTemplate: string, fileTemplate: string, ctx: NameContext): string {
+export function buildFilePath(
+  folderTemplate: string,
+  fileTemplate: string,
+  ctx: NameContext,
+): string {
   const folder = renderTemplate(folderTemplate, ctx);
-  let file = renderTemplate(fileTemplate || DEFAULT_FILE_TEMPLATE, ctx).replace(/[\\/]/g, '_').trim();
-  if (!file || file === '.' || file === `.${ctx.ext}`) file = ctx.fileName || `${ctx.postId}_${ctx.index}`;
-  if (ctx.ext && !file.toLowerCase().endsWith(`.${ctx.ext.toLowerCase()}`)) file = `${file}.${ctx.ext}`;
+  let file = renderTemplate(fileTemplate || DEFAULT_FILE_TEMPLATE, ctx)
+    .replace(/[\\/]/g, '_')
+    .trim();
+  if (!file || file === '.' || file === `.${ctx.ext}`)
+    file = ctx.fileName || `${ctx.postId}_${ctx.index}`;
+  if (ctx.ext && !file.toLowerCase().endsWith(`.${ctx.ext.toLowerCase()}`))
+    file = `${file}.${ctx.ext}`;
   return sanitizePath(folder ? `${folder}/${file}` : file);
 }
 
@@ -200,13 +224,19 @@ export function buildFolderPath(folderTemplate: string, ctx: NameContext): strin
 }
 
 /** Name of a post's ZIP archive (folder template + archive template + .zip). */
-export function buildArchivePath(folderTemplate: string, archiveTemplate: string, ctx: NameContext): string {
+export function buildArchivePath(
+  folderTemplate: string,
+  archiveTemplate: string,
+  ctx: NameContext,
+): string {
   // The archive replaces the post's own folder, so drop the last folder level
   // when it is the per-post one (it contains a post-specific token).
   const segments = folderTemplate.split('/');
   const postLevel = /\{(post_id|title|published|added)/i.test(segments[segments.length - 1] ?? '');
   const parent = postLevel ? segments.slice(0, -1).join('/') : folderTemplate;
   const folder = renderTemplate(parent, ctx);
-  const name = renderTemplate(archiveTemplate || DEFAULT_ARCHIVE_TEMPLATE, ctx).replace(/[\\/]/g, '_') || ctx.postId;
+  const name =
+    renderTemplate(archiveTemplate || DEFAULT_ARCHIVE_TEMPLATE, ctx).replace(/[\\/]/g, '_') ||
+    ctx.postId;
   return sanitizePath(`${folder}/${name}.zip`);
 }

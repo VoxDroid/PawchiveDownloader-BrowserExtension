@@ -1,4 +1,11 @@
-import { abortError, isAbortError, isTransientStatus, SiteLimiter, systemClock, type Clock } from '../net/limiter';
+import {
+  abortError,
+  isAbortError,
+  isTransientStatus,
+  SiteLimiter,
+  systemClock,
+  type Clock,
+} from '../net/limiter';
 import { normalizeCreator, normalizePost } from './normalize';
 import { parseRelayLinks, type RelayIndex } from './relay';
 import type { Creator, Post, RawPost, RawProfile, Service } from './types';
@@ -63,8 +70,16 @@ export class PawchiveClient {
     this.onRetry = options.onRetry;
   }
 
-  async getPost(service: Service, creatorId: string, postId: string, signal?: AbortSignal): Promise<Post> {
-    const raw = await this.json<RawPost | { post: RawPost }>(apiUrls.post(service, creatorId, postId), signal);
+  async getPost(
+    service: Service,
+    creatorId: string,
+    postId: string,
+    signal?: AbortSignal,
+  ): Promise<Post> {
+    const raw = await this.json<RawPost | { post: RawPost }>(
+      apiUrls.post(service, creatorId, postId),
+      signal,
+    );
     // Kemono wraps the post in { post }, Pawchive returns it bare; accept both.
     const post = 'post' in raw && raw.post ? raw.post : (raw as RawPost);
     if (!post || typeof post !== 'object' || !('id' in post)) {
@@ -74,7 +89,9 @@ export class PawchiveClient {
   }
 
   async getCreator(service: Service, creatorId: string, signal?: AbortSignal): Promise<Creator> {
-    return normalizeCreator(await this.json<RawProfile>(apiUrls.profile(service, creatorId), signal));
+    return normalizeCreator(
+      await this.json<RawProfile>(apiUrls.profile(service, creatorId), signal),
+    );
   }
 
   async getCreatorPage(
@@ -84,8 +101,16 @@ export class PawchiveClient {
     query: string | null = null,
     signal?: AbortSignal,
   ): Promise<Post[]> {
-    const raw = await this.json<RawPost[]>(apiUrls.creatorPosts(service, creatorId, offset, query), signal);
-    if (!Array.isArray(raw)) throw new ApiError('Unexpected posts response', 200, apiUrls.creatorPosts(service, creatorId, offset, query));
+    const raw = await this.json<RawPost[]>(
+      apiUrls.creatorPosts(service, creatorId, offset, query),
+      signal,
+    );
+    if (!Array.isArray(raw))
+      throw new ApiError(
+        'Unexpected posts response',
+        200,
+        apiUrls.creatorPosts(service, creatorId, offset, query),
+      );
     return raw.map(normalizePost);
   }
 
@@ -108,7 +133,13 @@ export class PawchiveClient {
     let offset = 0;
     let pages = 0;
     for (;;) {
-      const page = await this.getCreatorPage(service, creatorId, offset, options.query ?? null, options.signal);
+      const page = await this.getCreatorPage(
+        service,
+        creatorId,
+        offset,
+        options.query ?? null,
+        options.signal,
+      );
       pages += 1;
       for (const post of page) {
         if (seen.has(post.id)) continue;
@@ -122,13 +153,22 @@ export class PawchiveClient {
     return posts.slice(0, maxPosts);
   }
 
-  async getRecentPosts(offset = 0, query: string | null = null, signal?: AbortSignal): Promise<Post[]> {
+  async getRecentPosts(
+    offset = 0,
+    query: string | null = null,
+    signal?: AbortSignal,
+  ): Promise<Post[]> {
     const raw = await this.json<RawPost[]>(apiUrls.recentPosts(offset, query), signal);
     return Array.isArray(raw) ? raw.map(normalizePost) : [];
   }
 
   /** Temporary relay links for the post's preview-only files. */
-  async getRelayIndex(service: Service, creatorId: string, postId: string, signal?: AbortSignal): Promise<RelayIndex> {
+  async getRelayIndex(
+    service: Service,
+    creatorId: string,
+    postId: string,
+    signal?: AbortSignal,
+  ): Promise<RelayIndex> {
     const html = await this.text(pageUrls.post(service, creatorId, postId), signal, 'text/html');
     return parseRelayLinks(html);
   }
@@ -152,7 +192,11 @@ export class PawchiveClient {
     await turn;
   }
 
-  private async text(url: string, signal: AbortSignal | undefined, accept: string): Promise<string> {
+  private async text(
+    url: string,
+    signal: AbortSignal | undefined,
+    accept: string,
+  ): Promise<string> {
     let failures = 0;
     let rateLimits = 0;
     for (;;) {
@@ -182,7 +226,12 @@ export class PawchiveClient {
       if (response.ok) return response.text();
       if (cooldown !== null && rateLimits < this.maxRateLimitRetries) {
         rateLimits += 1;
-        this.onRetry?.({ url, attempt: rateLimits, delayMs: cooldown, reason: `HTTP ${response.status}` });
+        this.onRetry?.({
+          url,
+          attempt: rateLimits,
+          delayMs: cooldown,
+          reason: `HTTP ${response.status}`,
+        });
         continue;
       }
       if (isTransientStatus(response.status) && cooldown === null && failures < this.maxRetries) {

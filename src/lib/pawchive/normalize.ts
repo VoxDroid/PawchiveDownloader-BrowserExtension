@@ -1,8 +1,32 @@
-import type { Creator, FileCategory, FileRole, Post, PostFile, RawFile, RawPost, RawProfile } from './types';
+import type {
+  Creator,
+  FileCategory,
+  FileRole,
+  Post,
+  PostFile,
+  RawFile,
+  RawPost,
+  RawProfile,
+} from './types';
 import { fileUrl, hashFromPath, isSiteUrl, pageUrls, thumbnailUrl } from './urls';
 
 const CATEGORY_EXTENSIONS: Record<Exclude<FileCategory, 'other'>, readonly string[]> = {
-  image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'tif', 'tiff', 'jfif', 'heic', 'psd', 'clip', 'svg'],
+  image: [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'avif',
+    'bmp',
+    'tif',
+    'tiff',
+    'jfif',
+    'heic',
+    'psd',
+    'clip',
+    'svg',
+  ],
   video: ['mp4', 'm4v', 'webm', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'mpg', 'mpeg', 'ts'],
   audio: ['mp3', 'wav', 'flac', 'ogg', 'oga', 'm4a', 'aac', 'opus', 'wma'],
   archive: ['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'zst', 'lzh'],

@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import full from '../fixtures/post-full.json';
 import previewOnly from '../fixtures/post-preview-only.json';
 import { normalizePost } from '../../src/lib/pawchive/normalize';
-import { computeStats, DEFAULT_JOB_OPTIONS, hashesOf, optionsFromSettings, planPost } from '../../src/lib/jobs/plan';
+import {
+  computeStats,
+  DEFAULT_JOB_OPTIONS,
+  hashesOf,
+  optionsFromSettings,
+  planPost,
+} from '../../src/lib/jobs/plan';
 import { DEFAULT_SETTINGS } from '../../src/lib/settings';
 import type { FileItem, JobOptions, TextItem, ZipItem } from '../../src/lib/jobs/types';
 
@@ -14,7 +20,10 @@ const opts = (o: Partial<JobOptions> = {}): JobOptions => ({ ...DEFAULT_JOB_OPTI
 
 describe('optionsFromSettings', () => {
   it('copies settings and applies overrides', () => {
-    const o = optionsFromSettings({ ...DEFAULT_SETTINGS, categories: { ...DEFAULT_SETTINGS.categories, video: false } }, { mode: 'zip' });
+    const o = optionsFromSettings(
+      { ...DEFAULT_SETTINGS, categories: { ...DEFAULT_SETTINGS.categories, video: false } },
+      { mode: 'zip' },
+    );
     expect(o.mode).toBe('zip');
     expect(o.categories).not.toContain('video');
     expect(o.categories).toContain('image');
@@ -37,26 +46,66 @@ describe('planPost (individual)', () => {
   });
 
   it('respects an explicit selection over categories', () => {
-    const items = planPost(post, creator, opts({ categories: [], saveContent: 'none' }), [4], new Set(), now);
+    const items = planPost(
+      post,
+      creator,
+      opts({ categories: [], saveContent: 'none' }),
+      [4],
+      new Set(),
+      now,
+    );
     expect(items.map((i) => i.label)).toEqual(['Neverness to Everness - Elyms.rar']);
   });
 
   it('filters by category without a selection', () => {
-    const items = planPost(post, creator, opts({ categories: ['video'], saveContent: 'none' }), undefined, new Set(), now);
+    const items = planPost(
+      post,
+      creator,
+      opts({ categories: ['video'], saveContent: 'none' }),
+      undefined,
+      new Set(),
+      now,
+    );
     expect(items.map((i) => i.label)).toEqual(['trailer.mp4']);
   });
 
   it('skips files already downloaded', () => {
-    const items = planPost(post, creator, opts({ saveContent: 'none' }), undefined, new Set(hashesOf([post]).slice(0, 2)), now);
-    expect(items.filter((i) => i.status === 'skipped').map((i) => i.skipReason)).toEqual(['duplicate', 'duplicate']);
-    const keep = planPost(post, creator, opts({ saveContent: 'none', skipDownloaded: false }), undefined, new Set(hashesOf([post])), now);
+    const items = planPost(
+      post,
+      creator,
+      opts({ saveContent: 'none' }),
+      undefined,
+      new Set(hashesOf([post]).slice(0, 2)),
+      now,
+    );
+    expect(items.filter((i) => i.status === 'skipped').map((i) => i.skipReason)).toEqual([
+      'duplicate',
+      'duplicate',
+    ]);
+    const keep = planPost(
+      post,
+      creator,
+      opts({ saveContent: 'none', skipDownloaded: false }),
+      undefined,
+      new Set(hashesOf([post])),
+      now,
+    );
     expect(keep.every((i) => i.status === 'pending')).toBe(true);
   });
 
   it('writes html content and metadata when asked', () => {
-    const items = planPost(post, creator, opts({ saveContent: 'both', saveMetadata: true }), [], new Set(), now) as TextItem[];
+    const items = planPost(
+      post,
+      creator,
+      opts({ saveContent: 'both', saveMetadata: true }),
+      [],
+      new Set(),
+      now,
+    ) as TextItem[];
     expect(items.map((i) => i.label)).toEqual(['content.txt', 'content.html', 'post.json']);
-    expect(items[1]!.text).toContain('<title>[RE4R] EARLY ACCESS: Neverness to Everness - Elyms</title>');
+    expect(items[1]!.text).toContain(
+      '<title>[RE4R] EARLY ACCESS: Neverness to Everness - Elyms</title>',
+    );
     expect(JSON.parse(items[2]!.text).files).toHaveLength(5);
   });
 
@@ -64,14 +113,30 @@ describe('planPost (individual)', () => {
     const relay = planPost(preview, null, opts(), undefined, new Set(), now) as FileItem[];
     expect(relay.every((i) => i.source.relay && i.source.url === null)).toBe(true);
 
-    const thumbs = planPost(preview, null, opts({ previewOnly: 'thumbnail' }), undefined, new Set(), now) as FileItem[];
+    const thumbs = planPost(
+      preview,
+      null,
+      opts({ previewOnly: 'thumbnail' }),
+      undefined,
+      new Set(),
+      now,
+    ) as FileItem[];
     expect(thumbs[0]!.label).toBe('001_preview.jpg');
     expect(thumbs[0]!.source.url).toMatch(/^https:\/\/img\.pawchive\.pw\/thumbnail/);
     // a zip has no thumbnail, so it is skipped
     expect(thumbs[2]!.status).toBe('skipped');
 
-    const skipped = planPost(preview, null, opts({ previewOnly: 'skip' }), undefined, new Set(), now);
-    expect(skipped.every((i) => i.status === 'skipped' && i.skipReason === 'preview-only')).toBe(true);
+    const skipped = planPost(
+      preview,
+      null,
+      opts({ previewOnly: 'skip' }),
+      undefined,
+      new Set(),
+      now,
+    );
+    expect(skipped.every((i) => i.status === 'skipped' && i.skipReason === 'preview-only')).toBe(
+      true,
+    );
   });
 });
 
@@ -80,7 +145,9 @@ describe('planPost (zip)', () => {
     const items = planPost(post, creator, opts({ mode: 'zip' }), undefined, new Set(), now);
     const zip = items[0] as ZipItem;
     expect(zip.kind).toBe('zip');
-    expect(zip.path).toBe('Pawchive/Histy (patreon)/Histy - 2026-11-17 [RE4R] EARLY ACCESS_ Neverness to Everness - Elyms [175580645].zip');
+    expect(zip.path).toBe(
+      'Pawchive/Histy (patreon)/Histy - 2026-11-17 [RE4R] EARLY ACCESS_ Neverness to Everness - Elyms [175580645].zip',
+    );
     expect(zip.entries.map((e) => e.name)).toEqual([
       '01_Screenshot (1790).png',
       '02_Screenshot (1793).png',
@@ -92,13 +159,27 @@ describe('planPost (zip)', () => {
   });
 
   it('can include videos in the archive', () => {
-    const items = planPost(post, creator, opts({ mode: 'zip', zipVideosSeparately: false, saveContent: 'none' }), undefined, new Set(), now);
+    const items = planPost(
+      post,
+      creator,
+      opts({ mode: 'zip', zipVideosSeparately: false, saveContent: 'none' }),
+      undefined,
+      new Set(),
+      now,
+    );
     expect(items).toHaveLength(1);
     expect((items[0] as ZipItem).entries).toHaveLength(5);
   });
 
   it('falls back to plain text files when nothing else is left', () => {
-    const items = planPost(post, creator, opts({ mode: 'zip', categories: [] }), undefined, new Set(), now);
+    const items = planPost(
+      post,
+      creator,
+      opts({ mode: 'zip', categories: [] }),
+      undefined,
+      new Set(),
+      now,
+    );
     expect(items.map((i) => i.kind)).toEqual(['text']);
   });
 });
@@ -114,6 +195,15 @@ describe('computeStats', () => {
     items[2]!.totalBytes = 50;
     items[3]!.status = 'cancelled';
     items[4]!.status = 'skipped';
-    expect(computeStats(items)).toEqual({ total: 5, done: 1, failed: 1, skipped: 1, cancelled: 1, active: 1, bytes: 105, totalBytes: 150 });
+    expect(computeStats(items)).toEqual({
+      total: 5,
+      done: 1,
+      failed: 1,
+      skipped: 1,
+      cancelled: 1,
+      active: 1,
+      bytes: 105,
+      totalBytes: 150,
+    });
   });
 });

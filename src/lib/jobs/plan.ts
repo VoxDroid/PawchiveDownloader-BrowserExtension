@@ -1,10 +1,27 @@
 import { htmlToText } from '../pawchive/normalize';
 import type { Post, PostFile } from '../pawchive/types';
 import { DEFAULT_SETTINGS, type Settings } from '../settings';
-import { buildArchivePath, buildFilePath, buildFolderPath, type NameContext } from '../download/template';
-import type { CreatorInfo, FileItem, Item, JobOptions, JobStats, TextItem, ZipEntry, ZipItem } from './types';
+import {
+  buildArchivePath,
+  buildFilePath,
+  buildFolderPath,
+  type NameContext,
+} from '../download/template';
+import type {
+  CreatorInfo,
+  FileItem,
+  Item,
+  JobOptions,
+  JobStats,
+  TextItem,
+  ZipEntry,
+  ZipItem,
+} from './types';
 
-export function optionsFromSettings(settings: Settings, overrides: Partial<JobOptions> = {}): JobOptions {
+export function optionsFromSettings(
+  settings: Settings,
+  overrides: Partial<JobOptions> = {},
+): JobOptions {
   const categories = Object.entries(settings.categories)
     .filter(([, on]) => on)
     .map(([category]) => category) as JobOptions['categories'];
@@ -28,7 +45,12 @@ export function optionsFromSettings(settings: Settings, overrides: Partial<JobOp
 
 export const DEFAULT_JOB_OPTIONS: JobOptions = optionsFromSettings({ ...DEFAULT_SETTINGS });
 
-function nameContext(post: Post, creator: CreatorInfo | null, file: PostFile | null, now: Date): NameContext {
+function nameContext(
+  post: Post,
+  creator: CreatorInfo | null,
+  file: PostFile | null,
+  now: Date,
+): NameContext {
   return {
     service: post.service,
     creatorId: post.creatorId,
@@ -65,7 +87,14 @@ function metadataJson(post: Post, creator: CreatorInfo | null): string {
       edited: post.edited,
       tags: post.tags,
       url: post.url,
-      files: post.files.map((f) => ({ index: f.index, name: f.name, role: f.role, hash: f.hash, url: f.url, previewOnly: f.previewOnly })),
+      files: post.files.map((f) => ({
+        index: f.index,
+        name: f.name,
+        role: f.role,
+        hash: f.hash,
+        url: f.url,
+        previewOnly: f.previewOnly,
+      })),
     },
     null,
     2,
@@ -73,13 +102,18 @@ function metadataJson(post: Post, creator: CreatorInfo | null): string {
 }
 
 function contentHtmlDocument(post: Post): string {
-  const title = post.title.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c] as string);
+  const title = post.title.replace(
+    /[<>&]/g,
+    (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c] as string,
+  );
   return `<!doctype html>\n<html><head><meta charset="utf-8"><title>${title}</title></head>\n<body>\n<h1>${title}</h1>\n<p><a href="${post.url}">${post.url}</a></p>\n${post.contentHtml}\n</body></html>\n`;
 }
 
 function contentText(post: Post): string {
   const body = htmlToText(post.contentHtml);
-  const header = [post.title, post.published ? `Published: ${post.published}` : '', post.url].filter(Boolean).join('\n');
+  const header = [post.title, post.published ? `Published: ${post.published}` : '', post.url]
+    .filter(Boolean)
+    .join('\n');
   return `${header}\n\n${body}\n`;
 }
 
@@ -93,7 +127,14 @@ interface PlannedFile {
   skip?: FileItem['skipReason'];
 }
 
-function planFile(post: Post, creator: CreatorInfo | null, original: PostFile, options: JobOptions, known: Set<string>, now: Date): PlannedFile {
+function planFile(
+  post: Post,
+  creator: CreatorInfo | null,
+  original: PostFile,
+  options: JobOptions,
+  known: Set<string>,
+  now: Date,
+): PlannedFile {
   let file = original;
   let url = file.url;
   let relay = false;
@@ -155,7 +196,8 @@ export function planPost(
   if (hasContent && (options.saveContent === 'html' || options.saveContent === 'both')) {
     texts.push({ name: 'content.html', text: contentHtmlDocument(post), mime: 'text/html' });
   }
-  if (options.saveMetadata) texts.push({ name: 'post.json', text: metadataJson(post, creator), mime: 'application/json' });
+  if (options.saveMetadata)
+    texts.push({ name: 'post.json', text: metadataJson(post, creator), mime: 'application/json' });
 
   const fileItem = (p: PlannedFile): FileItem => ({
     ...baseItem(post),
@@ -172,7 +214,15 @@ export function planPost(
   if (options.mode === 'individual') {
     const items: Item[] = planned.map(fileItem);
     for (const t of texts) {
-      items.push({ ...baseItem(post), id: `${post.id}:${t.name}`, kind: 'text', label: t.name, path: inFolder(t.name), text: t.text, mime: t.mime } satisfies TextItem);
+      items.push({
+        ...baseItem(post),
+        id: `${post.id}:${t.name}`,
+        kind: 'text',
+        label: t.name,
+        path: inFolder(t.name),
+        text: t.text,
+        mime: t.mime,
+      } satisfies TextItem);
     }
     return items;
   }
@@ -196,7 +246,11 @@ export function planPost(
   }
   for (const t of texts) entries.push({ name: t.name, text: t.text, hash: null, category: 'text' });
   if (entries.some((e) => e.source)) {
-    const archivePath = buildArchivePath(options.folderTemplate, options.archiveTemplate, folderCtx);
+    const archivePath = buildArchivePath(
+      options.folderTemplate,
+      options.archiveTemplate,
+      folderCtx,
+    );
     items.unshift({
       ...baseItem(post),
       id: `${post.id}:zip`,
@@ -208,14 +262,31 @@ export function planPost(
   } else {
     // Nothing binary left to archive: save the texts as plain files instead.
     for (const t of texts) {
-      items.push({ ...baseItem(post), id: `${post.id}:${t.name}`, kind: 'text', label: t.name, path: inFolder(t.name), text: t.text, mime: t.mime } satisfies TextItem);
+      items.push({
+        ...baseItem(post),
+        id: `${post.id}:${t.name}`,
+        kind: 'text',
+        label: t.name,
+        path: inFolder(t.name),
+        text: t.text,
+        mime: t.mime,
+      } satisfies TextItem);
     }
   }
   return items;
 }
 
 export function computeStats(items: readonly Item[]): JobStats {
-  const stats: JobStats = { total: items.length, done: 0, failed: 0, skipped: 0, cancelled: 0, active: 0, bytes: 0, totalBytes: 0 };
+  const stats: JobStats = {
+    total: items.length,
+    done: 0,
+    failed: 0,
+    skipped: 0,
+    cancelled: 0,
+    active: 0,
+    bytes: 0,
+    totalBytes: 0,
+  };
   for (const item of items) {
     switch (item.status) {
       case 'done':
@@ -242,5 +313,9 @@ export function computeStats(items: readonly Item[]): JobStats {
 
 /** Hashes of every file a set of posts would download (for duplicate checks). */
 export function hashesOf(posts: readonly Post[]): string[] {
-  return [...new Set(posts.flatMap((p) => p.files.map((f) => f.hash).filter((h): h is string => Boolean(h))))];
+  return [
+    ...new Set(
+      posts.flatMap((p) => p.files.map((f) => f.hash).filter((h): h is string => Boolean(h))),
+    ),
+  ];
 }

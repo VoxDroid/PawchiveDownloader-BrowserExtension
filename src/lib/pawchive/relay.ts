@@ -66,7 +66,10 @@ export function parseRelayLinks(html: string): RelayIndex {
     const attrs = attributes(match[1] ?? '');
     const href = attrs.href;
     if (!href || !isRelayUrl(href)) continue;
-    const name = attrs.download?.trim() || decodeURIComponent(new URL(href).pathname.split('/').pop() ?? '') || null;
+    const name =
+      attrs.download?.trim() ||
+      decodeURIComponent(new URL(href).pathname.split('/').pop() ?? '') ||
+      null;
     const link: RelayLink = { url: href, expiresAt: expiryOf(href), name };
 
     const img = IMG_RE.exec(match[2] ?? '');
@@ -75,7 +78,10 @@ export function parseRelayLinks(html: string): RelayIndex {
       const src = imgAttrs['data-src'] || imgAttrs.src;
       if (src) {
         try {
-          const path = new URL(src, 'https://img.pawchive.pw').pathname.replace(/^\/thumbnail\/data/, '');
+          const path = new URL(src, 'https://img.pawchive.pw').pathname.replace(
+            /^\/thumbnail\/data/,
+            '',
+          );
           const canonical = canonicalPath(path);
           if (canonical) index.byPath.set(canonical, link);
         } catch {
@@ -89,7 +95,11 @@ export function parseRelayLinks(html: string): RelayIndex {
 }
 
 /** The relay link for a file, if the page offered one that has not expired. */
-export function findRelay(index: RelayIndex, file: Pick<PostFile, 'path' | 'name'>, now = Date.now()): RelayLink | null {
+export function findRelay(
+  index: RelayIndex,
+  file: Pick<PostFile, 'path' | 'name'>,
+  now = Date.now(),
+): RelayLink | null {
   const canonical = canonicalPath(file.path);
   const link = (canonical && index.byPath.get(canonical)) || index.byName.get(file.name) || null;
   if (!link) return null;

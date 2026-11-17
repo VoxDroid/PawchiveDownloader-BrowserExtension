@@ -1,0 +1,147 @@
+/*
+ * Design tokens. Every surface (in-page panel, popup, dashboard) reads these,
+ * and the theme is switched by setting data-theme on the root element.
+ * The accent color comes from Settings as --accent.
+ */
+
+.pdl-root,
+:root {
+  --font:
+    'PDL JetBrains Mono', 'JetBrainsMono Nerd Font', 'JetBrains Mono', ui-monospace,
+    'Cascadia Code', Consolas, monospace;
+  --icon-font: 'PDL JetBrains Mono';
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 340ms;
+
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+
+  --accent: #8b7cf6;
+  --accent-contrast: #ffffff;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-softer: color-mix(in srgb, var(--accent) 9%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 82%, white);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px color-mix(in srgb, var(--accent) 70%, transparent);
+
+  /* midnight (default) */
+  --bg: #0c0e13;
+  --bg-elev: #12151c;
+  --bg-elev-2: #181c25;
+  --bg-elev-3: #1f2430;
+  --bg-hover: color-mix(in srgb, var(--text) 6%, transparent);
+  --bg-active: color-mix(in srgb, var(--text) 10%, transparent);
+  --border: #232937;
+  --border-strong: #303849;
+  --text: #e6e9f0;
+  --text-dim: #a2a9b8;
+  --text-faint: #6b7385;
+  --success: #3ccf91;
+  --warning: #f5a524;
+  --danger: #ff5c7a;
+  --info: #5aa9ff;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.55), 0 2px 6px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 24px 64px -12px rgb(0 0 0 / 0.7), 0 4px 16px rgb(0 0 0 / 0.4);
+  --scrim: rgb(5 6 10 / 0.55);
+  color-scheme: dark;
+}
+
+[data-theme='graphite'] {
+  --bg: #111111;
+  --bg-elev: #171717;
+  --bg-elev-2: #1e1e1e;
+  --bg-elev-3: #262626;
+  --border: #2b2b2b;
+  --border-strong: #3a3a3a;
+  --text: #ececec;
+  --text-dim: #a8a8a8;
+  --text-faint: #707070;
+}
+
+[data-theme='plum'] {
+  --bg: #120d18;
+  --bg-elev: #18121f;
+  --bg-elev-2: #1f1828;
+  --bg-elev-3: #282033;
+  --border: #2e2439;
+  --border-strong: #3d3149;
+  --text: #ece6f3;
+  --text-dim: #ad9fbd;
+  --text-faint: #75688a;
+}
+
+[data-theme='forest'] {
+  --bg: #0b110e;
+  --bg-elev: #101814;
+  --bg-elev-2: #16201b;
+  --bg-elev-3: #1c2a23;
+  --border: #22302a;
+  --border-strong: #2e4037;
+  --text: #e3eee8;
+  --text-dim: #9db3a7;
+  --text-faint: #66806f;
+}
+
+[data-theme='ember'] {
+  --bg: #130e0c;
+  --bg-elev: #1a1310;
+  --bg-elev-2: #221915;
+  --bg-elev-3: #2b201a;
+  --border: #33261f;
+  --border-strong: #45332a;
+  --text: #f2e9e4;
+  --text-dim: #bba79c;
+  --text-faint: #846f63;
+}
+
+[data-theme='light'] {
+  --bg: #f6f7fb;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #f1f3f8;
+  --bg-elev-3: #e8ebf2;
+  --border: #e1e5ee;
+  --border-strong: #cdd3df;
+  --text: #171a22;
+  --text-dim: #545c6e;
+  --text-faint: #8a92a3;
+  --success: #12a46b;
+  --warning: #c77b00;
+  --danger: #e0244a;
+  --info: #2b7de9;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 8px 24px -6px rgb(16 24 40 / 0.14), 0 2px 6px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 24px 64px -12px rgb(16 24 40 / 0.22), 0 4px 16px rgb(16 24 40 / 0.08);
+  --scrim: rgb(20 24 34 / 0.28);
+  --accent-strong: color-mix(in srgb, var(--accent) 85%, black);
+  color-scheme: light;
+}
+
+[data-motion='reduced'] {
+  --dur-fast: 0ms;
+  --dur: 0ms;
+  --dur-slow: 0ms;
+}
+
+[data-motion='reduced'] *,
+[data-motion='reduced'] *::before,
+[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

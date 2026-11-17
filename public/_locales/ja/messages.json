@@ -1,0 +1,16 @@
+{
+  "extName": {
+    "message": "Pawchive Downloader",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Pawchive の投稿、添付ファイル、クリエイターの全投稿をダウンロード。ZIP 書庫、ファイル名テンプレート、履歴、ウォッチリストに対応。",
+    "description": "Store and browser description, at most 132 characters"
+  },
+  "cmdTogglePanel": {
+    "message": "ダウンロードパネルを開く/閉じる"
+  },
+  "cmdDownloadPage": {
+    "message": "表示中の投稿をダウンロード"
+  }
+}

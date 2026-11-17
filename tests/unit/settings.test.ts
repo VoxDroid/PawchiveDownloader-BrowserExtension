@@ -16,7 +16,12 @@ describe('coerceSettings', () => {
   });
 
   it('clamps numbers to the polite limits', () => {
-    const s = coerceSettings({ concurrency: 50, requestIntervalMs: 10, maxRetries: '7', zipMaxSizeMb: 99999 });
+    const s = coerceSettings({
+      concurrency: 50,
+      requestIntervalMs: 10,
+      maxRetries: '7',
+      zipMaxSizeMb: 99999,
+    });
     expect(s.concurrency).toBe(5);
     expect(s.requestIntervalMs).toBe(1000);
     expect(s.maxRetries).toBe(7);

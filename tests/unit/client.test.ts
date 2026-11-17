@@ -64,18 +64,23 @@ describe('PawchiveClient', () => {
   it('retries server errors and network failures, then gives up', async () => {
     const { client, calls, clock } = setup([json('', 502), new TypeError('offline'), json(full)]);
     const retries: string[] = [];
-    (client as unknown as { onRetry: (i: { reason: string }) => void }).onRetry = (i) => retries.push(i.reason);
+    (client as unknown as { onRetry: (i: { reason: string }) => void }).onRetry = (i) =>
+      retries.push(i.reason);
     await settle(client.getPost('patreon', '1', '2'), clock);
     expect(calls).toHaveLength(3);
     expect(retries).toEqual(['HTTP 502', 'network']);
 
     const failing = setup([json('', 500), json('', 500), json('', 500)]);
-    const error = await settle(failing.client.getPost('a', 'b', 'c'), failing.clock).catch((e) => e);
+    const error = await settle(failing.client.getPost('a', 'b', 'c'), failing.clock).catch(
+      (e) => e,
+    );
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(500);
 
     const offline = setup([new TypeError('x'), new TypeError('x'), new TypeError('x')]);
-    const netError = await settle(offline.client.getPost('a', 'b', 'c'), offline.clock).catch((e) => e);
+    const netError = await settle(offline.client.getPost('a', 'b', 'c'), offline.clock).catch(
+      (e) => e,
+    );
     expect(netError.status).toBe(0);
   });
 
@@ -100,8 +105,16 @@ describe('PawchiveClient', () => {
 
   it('pages through a creator until a short page', async () => {
     const page = (start: number, count: number) =>
-      Array.from({ length: count }, (_, i) => ({ ...full, id: String(start + i), attachments: [] }));
-    const { client, calls, clock } = setup([json(page(0, 50)), json(page(50, 50)), json(page(100, 7))]);
+      Array.from({ length: count }, (_, i) => ({
+        ...full,
+        id: String(start + i),
+        attachments: [],
+      }));
+    const { client, calls, clock } = setup([
+      json(page(0, 50)),
+      json(page(50, 50)),
+      json(page(100, 7)),
+    ]);
     const progress: number[] = [];
     const posts = await settle(
       client.getAllCreatorPosts('patreon', '1', { onProgress: (p) => progress.push(p.posts) }),
@@ -115,11 +128,16 @@ describe('PawchiveClient', () => {
   it('stops paging early when asked to', async () => {
     const page = Array.from({ length: 50 }, (_, i) => ({ ...full, id: String(i) }));
     const { client, calls, clock } = setup([json(page), json(page)]);
-    const posts = await settle(client.getAllCreatorPosts('patreon', '1', { stopWhen: () => true }), clock);
+    const posts = await settle(
+      client.getAllCreatorPosts('patreon', '1', { stopWhen: () => true }),
+      clock,
+    );
     expect(posts).toHaveLength(50);
     expect(calls).toHaveLength(1);
     const limited = setup([json(page)]);
-    expect(await settle(limited.client.getAllCreatorPosts('p', '1', { maxPosts: 10 }), limited.clock)).toHaveLength(10);
+    expect(
+      await settle(limited.client.getAllCreatorPosts('p', '1', { maxPosts: 10 }), limited.clock),
+    ).toHaveLength(10);
   });
 
   it('loads profiles, recent posts and relay links', async () => {
@@ -127,7 +145,9 @@ describe('PawchiveClient', () => {
       json({ id: '1', name: 'Histy', service: 'patreon' }),
       json([full]),
       json({}),
-      new Response('<a href="https://t1.pawchive.pw/f/a/b.zip?e=9999999999&s=1" download="b.zip">b</a>'),
+      new Response(
+        '<a href="https://t1.pawchive.pw/f/a/b.zip?e=9999999999&s=1" download="b.zip">b</a>',
+      ),
     ]);
     expect((await settle(client.getCreator('patreon', '1'), clock)).name).toBe('Histy');
     expect(await settle(client.getRecentPosts(), clock)).toHaveLength(1);

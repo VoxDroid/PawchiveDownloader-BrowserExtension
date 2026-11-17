@@ -27,10 +27,13 @@ export const systemClock: Clock = {
   sleep: (ms, signal) =>
     new Promise<void>((resolve, reject) => {
       if (signal?.aborted) return reject(abortError(signal));
-      const timer = setTimeout(() => {
-        signal?.removeEventListener('abort', onAbort);
-        resolve();
-      }, Math.max(0, ms));
+      const timer = setTimeout(
+        () => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve();
+        },
+        Math.max(0, ms),
+      );
       const onAbort = () => {
         clearTimeout(timer);
         reject(abortError(signal));
@@ -70,7 +73,10 @@ export const DEFAULT_POLICY: RateLimitPolicy = {
 };
 
 /** Seconds to wait from a Retry-After header (seconds or HTTP date), in ms. */
-export function parseRetryAfter(value: string | null | undefined, wallNow = Date.now()): number | null {
+export function parseRetryAfter(
+  value: string | null | undefined,
+  wallNow = Date.now(),
+): number | null {
   if (value == null) return null;
   const text = value.trim();
   if (!text) return null;
@@ -138,7 +144,8 @@ export class SiteLimiter {
 
   configure(options: { maxActive?: number; minIntervalMs?: number }): void {
     if (options.maxActive !== undefined) this.maxActive = Math.max(1, options.maxActive);
-    if (options.minIntervalMs !== undefined) this.minIntervalMs = Math.max(0, options.minIntervalMs);
+    if (options.minIntervalMs !== undefined)
+      this.minIntervalMs = Math.max(0, options.minIntervalMs);
     this.wakeSlotWaiters();
   }
 
@@ -169,6 +176,20 @@ export class SiteLimiter {
     });
   }
 
+  /**
+   * Waits for the site's cooldown and the start interval without taking a
+   * slot. For work that already holds a slot and makes several requests in a
+   * row, such as building a ZIP archive.
+   */
+  pace(url: string, signal?: AbortSignal): Promise<void> {
+    const turn = this.chain.then(() => this.waitForTurn(url, signal, false));
+    this.chain = turn.then(
+      () => undefined,
+      () => undefined,
+    );
+    return turn;
+  }
+
   /** Waits out a cooldown without taking a slot (for API requests). */
   async waitForSite(url: string, signal?: AbortSignal): Promise<void> {
     let waited = false;
@@ -181,14 +202,14 @@ export class SiteLimiter {
     }
   }
 
-  private async waitForTurn(url: string, signal?: AbortSignal): Promise<void> {
+  private async waitForTurn(url: string, signal?: AbortSignal, takeSlot = true): Promise<void> {
     for (;;) {
       if (signal?.aborted) throw abortError(signal);
       if (this.remaining(url) > 0) {
         await this.waitForSite(url, signal);
         continue;
       }
-      if (this.active >= this.maxActive) {
+      if (takeSlot && this.active >= this.maxActive) {
         await this.waitForSlot(signal);
         continue;
       }
@@ -199,7 +220,7 @@ export class SiteLimiter {
       }
       break;
     }
-    this.active += 1;
+    if (takeSlot) this.active += 1;
     this.nextStartAt = this.clock.now() + this.minIntervalMs;
   }
 
@@ -272,7 +293,10 @@ export class SiteLimiter {
   }
 
   private jittered(attempt: number): number {
-    const full = Math.min(this.policy.backoffCapMs, this.policy.backoffBaseMs * 2 ** Math.min(Math.max(attempt, 0), 30));
+    const full = Math.min(
+      this.policy.backoffCapMs,
+      this.policy.backoffBaseMs * 2 ** Math.min(Math.max(attempt, 0), 30),
+    );
     return full / 2 + (this.clock.random() * full) / 2;
   }
 

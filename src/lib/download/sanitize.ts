@@ -8,8 +8,9 @@
 const ILLEGAL = /[<>:"/\\|?*]/g;
 // Control characters, plus invisible direction and zero-width marks that can
 // disguise a file's real extension.
-// eslint-disable-next-line no-control-regex
-const INVISIBLE = /[\u0000-\u001f\u007f\u0080-\u009f​-‏‪-‮⁠-⁩﻿]/g;
+const INVISIBLE =
+  // eslint-disable-next-line no-control-regex
+  /[\u0000-\u001f\u007f\u0080-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g;
 const RESERVED = /^(con|prn|aux|nul|com\d|lpt\d|conin\$|conout\$)$/i;
 // Extensions the shell treats as shortcuts or system hooks; Chromium blocks them.
 const SHELL_EXTENSIONS = /\.(lnk|local|scf|url|desktop|sys|cpl|cfg|ini)$/i;
@@ -26,7 +27,11 @@ function truncateKeepingExtension(value: string, max: number): string {
 }
 
 export function sanitizeSegment(input: string, fallback = '_'): string {
-  let value = input.normalize('NFC').replace(/[\t\n\r]/g, ' ').replace(INVISIBLE, '').replace(ILLEGAL, '_');
+  let value = input
+    .normalize('NFC')
+    .replace(/[\t\n\r]/g, ' ')
+    .replace(INVISIBLE, '')
+    .replace(ILLEGAL, '_');
   value = value.replace(/\s+/g, ' ').trim();
   value = value.replace(/^[.~\s]+/, '').replace(/[.\s]+$/, '');
   if (!value) value = fallback;
@@ -66,12 +71,16 @@ function fitPathLength(segments: string[]): string {
     if (target >= current.length) {
       // Folders are already minimal: shorten the file name itself.
       const last = segments.length - 1;
-      segments[last] = truncateKeepingExtension(segments[last] as string, Math.max(16, (segments[last] as string).length - excess));
+      segments[last] = truncateKeepingExtension(
+        segments[last] as string,
+        Math.max(16, (segments[last] as string).length - excess),
+      );
       break;
     }
-    segments[longest] = longest === segments.length - 1
-      ? truncateKeepingExtension(current, target)
-      : current.slice(0, target).trimEnd() || '_';
+    segments[longest] =
+      longest === segments.length - 1
+        ? truncateKeepingExtension(current, target)
+        : current.slice(0, target).trimEnd() || '_';
   }
   return segments.join('/');
 }

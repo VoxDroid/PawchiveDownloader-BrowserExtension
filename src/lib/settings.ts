@@ -79,7 +79,10 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   previewOnly: 'relay',
   saveContent: 'txt',
   saveMetadata: false,
-  categories: Object.fromEntries(FILE_CATEGORIES.map((c) => [c, true])) as Record<FileCategory, boolean>,
+  categories: Object.fromEntries(FILE_CATEGORIES.map((c) => [c, true])) as Record<
+    FileCategory,
+    boolean
+  >,
   zipMaxSizeMb: 2048,
   zipVideosSeparately: true,
   zipSeparateOverMb: 300,
@@ -102,11 +105,14 @@ export const MIN_REQUEST_INTERVAL_MS = 1000;
 export const ZIP_HARD_LIMIT_MB = 3900;
 
 function oneOf<T extends string>(value: unknown, options: readonly T[], fallback: T): T {
-  return typeof value === 'string' && (options as readonly string[]).includes(value) ? (value as T) : fallback;
+  return typeof value === 'string' && (options as readonly string[]).includes(value)
+    ? (value as T)
+    : fallback;
 }
 
 function intIn(value: unknown, min: number, max: number, fallback: number): number {
-  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
+  const n =
+    typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, Math.round(n)));
 }
@@ -139,16 +145,28 @@ export function coerceSettings(input: unknown): Settings {
   return {
     language: s.language === 'auto' ? 'auto' : oneOf(s.language, LOCALES, d.language as Locale),
     theme: s.theme === 'system' ? 'system' : oneOf(s.theme, THEMES, d.theme as Theme),
-    accent: typeof s.accent === 'string' && /^#[0-9a-f]{6}$/i.test(s.accent) ? s.accent.toLowerCase() : d.accent,
+    accent:
+      typeof s.accent === 'string' && /^#[0-9a-f]{6}$/i.test(s.accent)
+        ? s.accent.toLowerCase()
+        : d.accent,
     reduceMotion: oneOf(s.reduceMotion, ['auto', 'on', 'off'] as const, d.reduceMotion),
     downloadMode: oneOf(s.downloadMode, ['individual', 'zip'] as const, d.downloadMode),
     concurrency: intIn(s.concurrency, 1, MAX_CONCURRENCY, d.concurrency),
-    requestIntervalMs: intIn(s.requestIntervalMs, MIN_REQUEST_INTERVAL_MS, 10_000, d.requestIntervalMs),
+    requestIntervalMs: intIn(
+      s.requestIntervalMs,
+      MIN_REQUEST_INTERVAL_MS,
+      10_000,
+      d.requestIntervalMs,
+    ),
     maxRetries: intIn(s.maxRetries, 0, 20, d.maxRetries),
     folderTemplate: template(s.folderTemplate, 'folder', d.folderTemplate),
     fileTemplate: template(s.fileTemplate, 'file', d.fileTemplate),
     archiveTemplate: template(s.archiveTemplate, 'file', d.archiveTemplate),
-    conflictAction: oneOf(s.conflictAction, ['uniquify', 'overwrite', 'prompt'] as const, d.conflictAction),
+    conflictAction: oneOf(
+      s.conflictAction,
+      ['uniquify', 'overwrite', 'prompt'] as const,
+      d.conflictAction,
+    ),
     skipDownloaded: bool(s.skipDownloaded, d.skipDownloaded),
     previewOnly: oneOf(s.previewOnly, ['relay', 'thumbnail', 'skip'] as const, d.previewOnly),
     saveContent: oneOf(s.saveContent, ['none', 'txt', 'html', 'both'] as const, d.saveContent),
@@ -158,12 +176,18 @@ export function coerceSettings(input: unknown): Settings {
     zipVideosSeparately: bool(s.zipVideosSeparately, d.zipVideosSeparately),
     zipSeparateOverMb: intIn(s.zipSeparateOverMb, 10, ZIP_HARD_LIMIT_MB, d.zipSeparateOverMb),
     showFloatingButton: bool(s.showFloatingButton, d.showFloatingButton),
-    buttonCorner: oneOf(s.buttonCorner, ['bottom-right', 'bottom-left', 'top-right', 'top-left'] as const, d.buttonCorner),
+    buttonCorner: oneOf(
+      s.buttonCorner,
+      ['bottom-right', 'bottom-left', 'top-right', 'top-left'] as const,
+      d.buttonCorner,
+    ),
     panelSide: oneOf(s.panelSide, ['right', 'left'] as const, d.panelSide),
     cardSelectors: bool(s.cardSelectors, d.cardSelectors),
     markDownloaded: bool(s.markDownloaded, d.markDownloaded),
     notifications: oneOf(s.notifications, ['all', 'errors', 'none'] as const, d.notifications),
-    watchIntervalMinutes: (WATCH_INTERVALS as readonly number[]).includes(Number(s.watchIntervalMinutes))
+    watchIntervalMinutes: (WATCH_INTERVALS as readonly number[]).includes(
+      Number(s.watchIntervalMinutes),
+    )
       ? Number(s.watchIntervalMinutes)
       : d.watchIntervalMinutes,
     recordHistory: bool(s.recordHistory, d.recordHistory),

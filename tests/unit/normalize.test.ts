@@ -37,7 +37,9 @@ describe('normalizePost', () => {
     expect(rar.category).toBe('archive');
     expect(rar.url).toMatch(/^https:\/\/n4\.pawchive\.pw\/data\/280\/57\//);
     expect(rar.thumbnailUrl).toBeNull();
-    expect(post.files[0]!.thumbnailUrl).toMatch(/^https:\/\/img\.pawchive\.pw\/thumbnail\/data\/64\/bb\//);
+    expect(post.files[0]!.thumbnailUrl).toMatch(
+      /^https:\/\/img\.pawchive\.pw\/thumbnail\/data\/64\/bb\//,
+    );
     expect(post.files[4]!.category).toBe('video');
     expect(post.files[0]!.role).toBe('file');
     expect(post.files[1]!.role).toBe('attachment');

@@ -64,7 +64,9 @@ describe('sanitizePath', () => {
   });
 
   it('keeps the total path within the limit', () => {
-    const path = sanitizePath(`${'x'.repeat(110)}/${'y'.repeat(110)}/${'z'.repeat(110)}/${'f'.repeat(100)}.png`);
+    const path = sanitizePath(
+      `${'x'.repeat(110)}/${'y'.repeat(110)}/${'z'.repeat(110)}/${'f'.repeat(100)}.png`,
+    );
     expect(path.length).toBeLessThanOrEqual(MAX_PATH_LENGTH);
     expect(path.endsWith('.png')).toBe(true);
     expect(path.split('/')).toHaveLength(4);
@@ -99,7 +101,9 @@ describe('templates', () => {
 
   it('falls back for missing values', () => {
     const bare = { ...ctx, postTitle: '', creatorName: '', published: null, hash: null };
-    expect(renderTemplate('{title}/{creator}/{published}/{hash}', bare)).toBe('175580645/2581747//');
+    expect(renderTemplate('{title}/{creator}/{published}/{hash}', bare)).toBe(
+      '175580645/2581747//',
+    );
   });
 
   it('validates templates', () => {
@@ -142,7 +146,11 @@ describe('path builders', () => {
   it('builds folders and archives', () => {
     expect(buildFolderPath('Pawchive/{creator}', ctx)).toBe('Pawchive/Histy');
     expect(buildFolderPath('', ctx)).toBe('');
-    expect(buildArchivePath('Pawchive/{creator}/{title}', '{post_id}', ctx)).toBe('Pawchive/Histy/175580645.zip');
-    expect(buildArchivePath('Pawchive/{creator}', '{post_id}', ctx)).toBe('Pawchive/Histy/175580645.zip');
+    expect(buildArchivePath('Pawchive/{creator}/{title}', '{post_id}', ctx)).toBe(
+      'Pawchive/Histy/175580645.zip',
+    );
+    expect(buildArchivePath('Pawchive/{creator}', '{post_id}', ctx)).toBe(
+      'Pawchive/Histy/175580645.zip',
+    );
   });
 });

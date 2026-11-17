@@ -1,0 +1,16 @@
+{
+  "extName": {
+    "message": "Pawchive Downloader",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Download posts, attachments and whole creators from Pawchive, with ZIP archives, name templates, history and a watchlist.",
+    "description": "Store and browser description, at most 132 characters"
+  },
+  "cmdTogglePanel": {
+    "message": "Open or close the download panel"
+  },
+  "cmdDownloadPage": {
+    "message": "Download the post you are viewing"
+  }
+}

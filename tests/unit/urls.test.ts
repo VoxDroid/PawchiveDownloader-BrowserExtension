@@ -40,7 +40,9 @@ describe('parsePageUrl', () => {
   });
 
   it('recognises post pages with trailing parts', () => {
-    expect(parsePageUrl('https://pawchive.pw/fanbox/user/1386751/post/99/revision/3').kind).toBe('post');
+    expect(parsePageUrl('https://pawchive.pw/fanbox/user/1386751/post/99/revision/3').kind).toBe(
+      'post',
+    );
   });
 
   it('recognises creator pages with offset and query', () => {
@@ -58,7 +60,11 @@ describe('parsePageUrl', () => {
   });
 
   it('recognises the posts listing', () => {
-    expect(parsePageUrl('https://pawchive.pw/posts?q=test')).toEqual({ kind: 'listing', offset: 0, query: 'test' });
+    expect(parsePageUrl('https://pawchive.pw/posts?q=test')).toEqual({
+      kind: 'listing',
+      offset: 0,
+      query: 'test',
+    });
   });
 
   it('ignores other hosts and pages', () => {
@@ -72,7 +78,9 @@ describe('parsePageUrl', () => {
 
 describe('url builders', () => {
   it('builds API urls', () => {
-    expect(apiUrls.post('patreon', '1', '2')).toBe('https://pawchive.pw/api/v1/patreon/user/1/post/2');
+    expect(apiUrls.post('patreon', '1', '2')).toBe(
+      'https://pawchive.pw/api/v1/patreon/user/1/post/2',
+    );
     expect(apiUrls.profile('fanbox', '9')).toBe('https://pawchive.pw/api/v1/fanbox/user/9/profile');
     expect(apiUrls.creatorPosts('patreon', '1', 50, 'a b')).toBe(
       'https://pawchive.pw/api/v1/patreon/user/1/posts?o=50&q=a+b',
