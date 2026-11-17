@@ -1,0 +1,28 @@
+name: Translation fix
+description: A wrong, unclear or missing translation.
+labels: [translation]
+body:
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Japanese
+        - Korean
+        - Simplified Chinese
+        - Spanish
+        - Brazilian Portuguese
+        - Russian
+        - German
+        - French
+        - English
+        - A new language
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Current and suggested text
+      description: Where it appears, the current text, and your suggestion.
+    validations:
+      required: true

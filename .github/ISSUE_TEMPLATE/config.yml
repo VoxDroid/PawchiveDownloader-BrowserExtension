@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/security/advisories/new
+    about: Report a vulnerability privately; only the maintainers can see it.
+  - name: KemonoDownloader (desktop app)
+    url: https://github.com/VoxDroid/KemonoDownloader
+    about: Issues with the desktop app belong in its own repository.
