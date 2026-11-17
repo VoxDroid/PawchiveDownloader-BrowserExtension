@@ -111,7 +111,8 @@ export class DownloadEngine {
   private jobs: Job[] = [];
   private readonly active = new Map<string, Active>();
   private readonly waiters = new Map<number, Waiter>();
-  private readonly relays = new Map<string, { index: RelayIndex; at: number }>();
+  /** Relay links per post, shared by every file of the post (in flight too). */
+  private readonly relays = new Map<string, { index: Promise<RelayIndex>; at: number }>();
   private readonly speed = new Map<string, Array<{ at: number; bytes: number }>>();
   private readonly resolving = new Map<string, AbortController>();
   private wakeTimer: unknown = null;
@@ -788,16 +789,17 @@ export class DownloadEngine {
     const key = postKey(post);
     let cached = this.relays.get(key);
     if (!cached || this.now() - cached.at > RELAY_TTL_MS) {
-      const index = await this.deps.client.getRelayIndex(
-        post.service,
-        post.creatorId,
-        post.postId,
-        signal,
-      );
+      // Not tied to one item's signal: other files of the post wait on it too.
+      const index = this.deps.client.getRelayIndex(post.service, post.creatorId, post.postId);
       cached = { index, at: this.now() };
       this.relays.set(key, cached);
+      index.catch(() => {
+        if (this.relays.get(key)?.index === index) this.relays.delete(key);
+      });
     }
-    return findRelay(cached.index, source, this.now())?.url ?? null;
+    if (signal.aborted) throw abortError(signal);
+    const index = await cached.index;
+    return findRelay(index, source, this.now())?.url ?? null;
   }
 
   // -------------------------------------------------------------- actions
