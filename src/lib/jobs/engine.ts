@@ -283,7 +283,11 @@ export class DownloadEngine {
     }
 
     this.jobs.push(job);
-    this.deps.log.info(`Queued "${job.title}"`, { id: job.id, items: job.items.length });
+    this.deps.log.info(
+      job.request
+        ? `Queued "${job.title}", looking up posts`
+        : `Queued "${job.title}" (${job.items.length} items)`,
+    );
     this.changed();
     if (job.status === 'resolving') void this.resolve(job);
     else {

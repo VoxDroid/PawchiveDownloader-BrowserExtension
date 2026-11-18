@@ -6,6 +6,7 @@
   import type { PageRef } from '../../lib/pawchive/types';
   import { parsePageUrl, SITE_ORIGIN } from '../../lib/pawchive/urls';
   import { watchKey } from '../../lib/watch';
+  import { LINKS } from '../../lib/links';
   import { app, overallProgress, t, themeDocument, fmt } from '../../ui/state/app.svelte';
   import { toast } from '../../ui/state/toasts.svelte';
   import Button from '../../ui/components/Button.svelte';
@@ -92,6 +93,12 @@
       label={t('nav.downloads')}
       tipSide="bottom"
       onclick={() => dashboard('downloads')}
+    />
+    <IconButton
+      icon="coffee"
+      label={t('support.kofi')}
+      tipSide="bottom"
+      onclick={() => browser.tabs.create({ url: LINKS.kofi })}
     />
     <IconButton
       icon="settings"

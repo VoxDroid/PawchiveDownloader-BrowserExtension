@@ -18,6 +18,10 @@
 </p>
 
 <p align="center">
+  <a href="https://ko-fi.com/izeno"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" /></a>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/panel-post.png" alt="The download panel on a Pawchive post" width="880" />
 </p>
 
@@ -36,6 +40,7 @@ Pawchive Downloader adds a download panel to every post and creator page on Pawc
 - [Privacy and politeness](#privacy-and-politeness)
 - [Development](#development)
 - [Project structure](#project-structure)
+- [Support the project](#support-the-project)
 - [Disclaimer and ethical use](#disclaimer-and-ethical-use)
 - [Credits](#credits)
 - [License](#license)
@@ -223,6 +228,10 @@ scripts/                 Font subsetting, icons, locale tools, screenshots
 ```
 
 A deeper tour is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Support the project
+
+Pawchive Downloader is free and open source, and it will stay that way. If it saves you time, you can [buy me a coffee on Ko-fi](https://ko-fi.com/izeno). Starring the repository, reporting bugs and improving translations help just as much.
 
 ## Disclaimer and ethical use
 

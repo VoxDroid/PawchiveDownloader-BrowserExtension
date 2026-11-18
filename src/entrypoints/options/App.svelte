@@ -8,6 +8,7 @@
   import Icon from '../../ui/components/Icon.svelte';
   import Logo from '../../ui/components/Logo.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
+  import SupportCard from '../../ui/components/SupportCard.svelte';
   import DownloadsPage from './pages/DownloadsPage.svelte';
   import HistoryPage from './pages/HistoryPage.svelte';
   import WatchlistPage from './pages/WatchlistPage.svelte';
@@ -85,6 +86,7 @@
       {/each}
     </ul>
     <div class="nav-foot">
+      <SupportCard variant="compact" />
       {#if progress.active > 0}
         <div class="mini-progress" style="--p:{progress.ratio}">
           <span>{t('nav.activeJobs', { count: progress.active })}</span>

@@ -172,7 +172,7 @@ export function overallProgress(jobs: readonly JobSummary[]): {
   let total = 0;
   let speed = 0;
   for (const job of running) {
-    done += job.stats.done + job.stats.failed + job.stats.skipped;
+    done += job.stats.done + job.stats.failed + job.stats.skipped + (job.stats.partial ?? 0);
     total += job.stats.total;
     speed += job.speed;
   }

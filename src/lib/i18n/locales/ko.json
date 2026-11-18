@@ -404,5 +404,10 @@
   "about.privacyBody": "계정, 추적, 분석이 없습니다. 설정, 기록, 로그는 브라우저에만 남으며 확장 프로그램은 pawchive.pw와만 통신합니다.",
   "about.source": "소스 코드",
   "about.report": "문제 신고",
-  "about.credits": "글꼴: JetBrains Mono Nerd Font (SIL Open Font License 1.1). WXT, Svelte, fflate로 제작. Pawchive와 무관합니다."
+  "about.credits": "글꼴: JetBrains Mono Nerd Font (SIL Open Font License 1.1). WXT, Svelte, fflate로 제작. Pawchive와 무관합니다.",
+  "support.title": "Pawchive Downloader가 마음에 드시나요?",
+  "support.body": "무료 오픈 소스이며 앞으로도 계속 무료입니다. 시간을 아끼는 데 도움이 되었다면 Ko-fi에서 커피 한 잔 사 주세요. 꾸준한 업데이트에 큰 힘이 됩니다.",
+  "support.kofi": "Ko-fi에서 후원하기",
+  "support.star": "GitHub에서 스타 주기",
+  "support.dismiss": "다시 보지 않기"
 }

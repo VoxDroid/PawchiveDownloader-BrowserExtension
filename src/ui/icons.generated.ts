@@ -82,6 +82,10 @@ export const ICONS = {
   rename: '\u{F0455}',
   restore: '\u{F099B}',
   hash: '\u{F0423}',
+  coffee: '\u{F06CA}',
+  heart: '\u{F02D1}',
+  heartOutline: '\u{F02D5}',
+  share: '\u{F1514}',
 } as const;
 
 export type IconName = keyof typeof ICONS;

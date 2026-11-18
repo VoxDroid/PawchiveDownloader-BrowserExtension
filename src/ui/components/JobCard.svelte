@@ -24,11 +24,9 @@
     job.status === 'done' || job.status === 'failed' || job.status === 'cancelled',
   );
   const settled = $derived(s.done + s.failed + s.skipped + s.cancelled);
-  const ratio = $derived(s.total ? settled / s.total : 0);
-  const byteRatio = $derived(s.totalBytes > 0 ? s.bytes / s.totalBytes : 0);
-  const progress = $derived(
-    job.status === 'running' && s.total <= 3 && byteRatio > 0 ? byteRatio : ratio,
-  );
+  // Finished items plus how far the running ones are, so the bar moves
+  // during big files instead of jumping when each one completes.
+  const progress = $derived(s.total ? Math.min(1, (settled + (s.partial ?? 0)) / s.total) : 0);
   const partial = $derived(job.status === 'done' && s.failed > 0);
   const tone = $derived(
     job.status === 'failed'
@@ -56,7 +54,12 @@
   );
   const statusLabel = $derived(partial ? t('status.partial') : t(`status.${job.status}`));
   const eta = $derived(
-    job.speed > 0 && s.totalBytes > s.bytes && job.status === 'running'
+    // Sizes of files that have not started are unknown, so only estimate
+    // once everything left is already downloading.
+    job.speed > 0 &&
+      s.totalBytes > s.bytes &&
+      job.status === 'running' &&
+      settled + s.active === s.total
       ? ((s.totalBytes - s.bytes) / job.speed) * 1000
       : 0,
   );

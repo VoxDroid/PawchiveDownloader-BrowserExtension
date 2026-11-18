@@ -28,6 +28,7 @@ function job(overrides: Partial<JobSummary> = {}): JobSummary {
       active: 1,
       bytes: 2_097_152,
       totalBytes: 4_194_304,
+      partial: 0.5,
     },
     speed: 1_048_576,
     current: ['a.png'],

@@ -15,6 +15,10 @@
   import Segmented from '../../../ui/components/Segmented.svelte';
   import VirtualList from '../../../ui/components/VirtualList.svelte';
   import PageHeader from '../PageHeader.svelte';
+  import SupportCard from '../../../ui/components/SupportCard.svelte';
+  import { SUPPORT_PROMPT_AFTER } from '../../../lib/links';
+  import { supportCardDismissed } from '../../../lib/storage/prefs';
+  import { onMount } from 'svelte';
 
   type Filter = 'all' | 'active' | 'finished';
   let filter = $state<Filter>('all');
@@ -80,6 +84,20 @@
     if (!found) toast(t('downloads.fileMissing'), 'warning');
   }
 
+  // A one-time thank-you once someone has finished a few downloads.
+  let showSupport = $state(false);
+  onMount(async () => {
+    const [dismissed, stats] = await Promise.all([
+      supportCardDismissed.getValue(),
+      call('history:stats').catch(() => ({ history: 0 })),
+    ]);
+    showSupport = !dismissed && stats.history >= SUPPORT_PROMPT_AFTER;
+  });
+  function dismissSupport() {
+    showSupport = false;
+    void supportCardDismissed.setValue(true);
+  }
+
   const ITEM_ICON: Record<Item['status'], IconName> = {
     pending: 'clock',
     active: 'download',
@@ -106,6 +124,10 @@
     >
   {/snippet}
 </PageHeader>
+
+{#if showSupport}
+  <div class="support"><SupportCard ondismiss={dismissSupport} /></div>
+{/if}
 
 <div class="stats">
   <div class="stat">
@@ -224,6 +246,9 @@
 {/if}
 
 <style>
+  .support {
+    margin-bottom: 20px;
+  }
   .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

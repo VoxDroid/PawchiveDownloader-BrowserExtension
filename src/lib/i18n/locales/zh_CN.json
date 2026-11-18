@@ -404,5 +404,10 @@
   "about.privacyBody": "没有账户、跟踪或统计分析。设置、历史记录和日志都保存在你的浏览器中，扩展只与 pawchive.pw 通信。",
   "about.source": "源代码",
   "about.report": "报告问题",
-  "about.credits": "字体：JetBrains Mono Nerd Font（SIL Open Font License 1.1）。基于 WXT、Svelte 和 fflate 构建。与 Pawchive 无关。"
+  "about.credits": "字体：JetBrains Mono Nerd Font（SIL Open Font License 1.1）。基于 WXT、Svelte 和 fflate 构建。与 Pawchive 无关。",
+  "support.title": "喜欢 Pawchive Downloader 吗？",
+  "support.body": "它是免费的开源软件，并且会一直免费。如果它为你节省了时间，欢迎在 Ko-fi 上请我喝杯咖啡，这能让更新持续下去。",
+  "support.kofi": "在 Ko-fi 上支持",
+  "support.star": "在 GitHub 上加星",
+  "support.dismiss": "不再显示"
 }

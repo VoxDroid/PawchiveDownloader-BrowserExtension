@@ -69,6 +69,20 @@ describe('planPost (individual)', () => {
     expect(items.map((i) => i.label)).toEqual(['trailer.mp4']);
   });
 
+  it('does not save the text again when every file was already downloaded', () => {
+    const items = planPost(post, creator, opts(), undefined, new Set(hashesOf([post])), now);
+    expect(items.every((i) => i.kind === 'file' && i.skipReason === 'duplicate')).toBe(true);
+    const zip = planPost(
+      post,
+      creator,
+      opts({ mode: 'zip' }),
+      undefined,
+      new Set(hashesOf([post])),
+      now,
+    );
+    expect(zip.some((i) => i.kind === 'text' || i.kind === 'zip')).toBe(false);
+  });
+
   it('skips files already downloaded', () => {
     const items = planPost(
       post,
@@ -204,6 +218,7 @@ describe('computeStats', () => {
       active: 1,
       bytes: 105,
       totalBytes: 150,
+      partial: 0.1,
     });
   });
 });

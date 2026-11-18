@@ -1,6 +1,5 @@
 {
   "app.name": "Pawchive Downloader",
-
   "common.cancel": "Cancel",
   "common.clear": "Clear",
   "common.close": "Close",
@@ -20,7 +19,6 @@
   "common.selectNone": "Select none",
   "common.untitled": "Untitled",
   "common.view": "View",
-
   "nav.downloads": "Downloads",
   "nav.history": "History",
   "nav.watchlist": "Watchlist",
@@ -31,7 +29,6 @@
   "nav.activeJobs_other": "{count} downloads running",
   "nav.connected": "Connected",
   "nav.reconnecting": "Reconnecting...",
-
   "status.resolving": "Looking up posts",
   "status.queued": "Queued",
   "status.running": "Downloading",
@@ -40,12 +37,10 @@
   "status.failed": "Failed",
   "status.cancelled": "Cancelled",
   "status.partial": "Completed with errors",
-
   "skip.duplicate": "Already downloaded",
   "skip.preview-only": "Only a preview exists",
   "skip.no-relay": "No temporary link available",
   "skip.too-large": "Too large for the archive",
-
   "category.image": "Images",
   "category.video": "Videos",
   "category.audio": "Audio",
@@ -53,7 +48,6 @@
   "category.document": "Documents",
   "category.text": "Text",
   "category.other": "Other",
-
   "jobs.progress": "{done} of {total} done",
   "jobs.failed_one": "{count} failed",
   "jobs.failed_other": "{count} failed",
@@ -61,23 +55,18 @@
   "jobs.skipped_other": "{count} skipped",
   "jobs.eta": "{time} left",
   "jobs.scanning": "{pages} pages, {posts} posts found",
-
   "error.nothingFound": "No posts matched, so nothing was downloaded.",
-
   "fab.label": "Pawchive Downloader",
   "fab.tooltip": "Open the downloader (Alt+Shift+D)",
-
   "panel.post": "Download this post",
   "panel.creator": "Download from this creator",
   "panel.listing": "Pick posts to download",
   "panel.activity": "Activity",
-
   "options.mode": "Save as",
   "options.individual": "Separate files",
   "options.zip": "ZIP archive",
   "options.saveText": "Save post text",
   "options.skipDownloaded": "Skip files I already have",
-
   "post.loading": "Loading post...",
   "post.loadFailed": "Could not load this post",
   "post.view": "View",
@@ -97,7 +86,6 @@
   "post.download_one": "Download {count} file",
   "post.download_other": "Download {count} files",
   "post.downloadNothing": "Save post text only",
-
   "file.open": "Open in a new tab",
   "file.downloaded": "Saved",
   "file.downloadedHint": "You downloaded this before",
@@ -105,7 +93,6 @@
   "file.previewHint": "Pawchive only keeps a preview of this file",
   "file.relay": "Temporary",
   "file.relayHint": "The full file is available through a temporary link",
-
   "creator.watch": "Watch",
   "creator.watching": "Watching",
   "creator.updated": "updated {date}",
@@ -129,7 +116,6 @@
   "creator.download_one": "Download {count} post",
   "creator.download_other": "Download {count} posts",
   "creator.downloadAll": "Download all posts",
-
   "selection.title": "Select posts on the page",
   "selection.hint_one": "{count} post on this page",
   "selection.hint_other": "{count} posts on this page",
@@ -143,16 +129,13 @@
   "selection.jobTitle_other": "{count} posts",
   "select.card": "Select this post",
   "cards.downloaded": "Saved",
-
   "listing.tipClick": "Turn on selection, then click posts on the page to pick them.",
   "listing.tipShift": "Hold Shift and click to select every post in between.",
   "listing.tipContext": "Right-click any post link to download it directly.",
-
   "other.title": "Open a post or a creator",
   "other.body": "Go to a post or a creator page on Pawchive to choose what to download. On lists of posts you can also select several at once.",
   "other.browse": "Browse posts",
   "other.creators": "Creators",
-
   "toast.queuedFiles_one": "Added {count} file to the queue",
   "toast.queuedFiles_other": "Added {count} files to the queue",
   "toast.queuedPosts_one": "Added {count} post to the queue",
@@ -160,7 +143,6 @@
   "toast.queuedPost": "Added the post to the queue",
   "toast.queuedCreator": "Queued every post from {name}",
   "toast.queueFailed": "Could not start the download: {error}",
-
   "popup.offSite": "Not on Pawchive",
   "popup.offSiteBody": "Open a post or creator on pawchive.pw to download from it.",
   "popup.openSite": "Open Pawchive",
@@ -177,7 +159,6 @@
   "popup.active_other": "{count} running",
   "popup.noJobs": "Nothing downloaded yet. Open a post to start.",
   "popup.folder": "Folder",
-
   "downloads.description": "Everything queued, running and recently finished. Downloads keep going when you close this page.",
   "downloads.pauseAll": "Pause all",
   "downloads.resumeAll": "Resume all",
@@ -200,7 +181,6 @@
   "downloads.noItems": "Nothing to show",
   "downloads.showInFolder": "Show in folder",
   "downloads.fileMissing": "That file is no longer where it was saved.",
-
   "history.description": "Every finished download. History stays on this device and is never sent anywhere.",
   "history.clear": "Clear history",
   "history.clearTitle": "Clear the download history?",
@@ -233,7 +213,6 @@
   "history.openDownloads": "Open downloads folder",
   "history.more_one": "Show {count} more",
   "history.more_other": "Show {count} more",
-
   "watch.description": "Follow creators and get told when they post. New posts can be downloaded in one click, or automatically.",
   "watch.checkAll": "Check all now",
   "watch.checkNow": "Check now",
@@ -261,7 +240,6 @@
   "watch.foundNew_one": "Found {count} new post",
   "watch.foundNew_other": "Found {count} new posts",
   "watch.nothingNew": "No new posts",
-
   "logs.description": "What the extension did and why, for troubleshooting. Logs stay on this device.",
   "logs.search": "Search logs",
   "logs.follow": "Follow new lines",
@@ -271,7 +249,6 @@
   "logs.info": "Info",
   "logs.warn": "Warnings",
   "logs.error": "Errors",
-
   "settings.description": "Changes save immediately and sync to your other browsers.",
   "settings.saved": "Saved",
   "settings.accessMissing": "Pawchive Downloader cannot reach pawchive.pw yet. Allow it to start downloading.",
@@ -355,7 +332,6 @@
   "settings.resetTitle": "Reset all settings?",
   "settings.resetBody": "Every setting goes back to its default. Your history and watchlist are not affected.",
   "settings.resetDone": "Settings reset",
-
   "theme.midnight": "Midnight",
   "theme.graphite": "Graphite",
   "theme.plum": "Plum",
@@ -363,32 +339,25 @@
   "theme.ember": "Ember",
   "theme.light": "Light",
   "theme.system": "Match system",
-
   "motion.auto": "Follow system",
   "motion.off": "Full",
   "motion.on": "Reduced",
-
   "conflict.uniquify": "Keep both (add a number)",
   "conflict.overwrite": "Replace it",
   "conflict.prompt": "Ask where to save",
-
   "preview.relay": "Get the full file when possible",
   "preview.thumbnail": "Save the preview image",
   "preview.skip": "Skip them",
-
   "content.none": "Do not save",
   "content.txt": "Plain text (content.txt)",
   "content.html": "Web page (content.html)",
   "content.both": "Both",
-
   "corner.bottom-right": "Bottom right",
   "corner.bottom-left": "Bottom left",
   "corner.top-right": "Top right",
   "corner.top-left": "Top left",
-
   "side.left": "Left",
   "side.right": "Right",
-
   "notify.all": "Finished downloads and new posts",
   "notify.errors": "Only problems",
   "notify.none": "Off",
@@ -400,19 +369,16 @@
   "notify.jobPartial_other": "{done} saved, {count} files could not be downloaded.",
   "notify.newPosts_one": "{count} new post",
   "notify.newPosts_other": "{count} new posts",
-
   "interval.0": "Never",
   "interval.60": "Every hour",
   "interval.180": "Every 3 hours",
   "interval.360": "Every 6 hours",
   "interval.720": "Every 12 hours",
   "interval.1440": "Once a day",
-
   "template.empty": "This cannot be empty.",
   "template.parent": "Folders cannot go up with \"..\".",
   "template.unknown": "Contains an unknown token.",
   "template.braces": "A brace is not closed.",
-
   "preset.numbered": "Numbered",
   "preset.original": "Original names",
   "preset.hash": "Content hash",
@@ -423,7 +389,6 @@
   "preset.byDate": "By year and month",
   "preset.default": "Default",
   "preset.short": "Post ID",
-
   "token.service": "Site the post came from (patreon, fanbox)",
   "token.creator": "Creator name",
   "token.creator_id": "Creator ID",
@@ -439,15 +404,12 @@
   "token.ext": "Extension",
   "token.hash": "Content hash, e.g. {hash:8}",
   "token.role": "file, attachment or inline",
-
   "shortcut.toggle-panel": "Open or close the panel",
   "shortcut.download-page": "Download the post you are viewing",
-
   "menu.downloadPost": "Download this post",
   "menu.downloadCreator": "Download all posts from this creator",
   "menu.watchCreator": "Watch this creator for new posts",
   "menu.openPanel": "Open Pawchive Downloader",
-
   "about.tagline": "Download posts, attachments and whole creators from Pawchive, right in your browser.",
   "about.start": "Getting started",
   "about.step1": "Open a post or a creator page on pawchive.pw.",
@@ -471,5 +433,10 @@
   "about.privacyBody": "No accounts, tracking or analytics. Settings, history and logs stay in your browser; the extension only talks to pawchive.pw.",
   "about.source": "Source code",
   "about.report": "Report a problem",
-  "about.credits": "Font: JetBrains Mono Nerd Font (SIL Open Font License 1.1). Built with WXT, Svelte and fflate. Not affiliated with Pawchive."
+  "about.credits": "Font: JetBrains Mono Nerd Font (SIL Open Font License 1.1). Built with WXT, Svelte and fflate. Not affiliated with Pawchive.",
+  "support.title": "Enjoying Pawchive Downloader?",
+  "support.body": "It is free and open source, and it will stay that way. If it saves you time, you can buy me a coffee on Ko-fi. It keeps the updates coming.",
+  "support.kofi": "Support on Ko-fi",
+  "support.star": "Star on GitHub",
+  "support.dismiss": "Don't show this again"
 }

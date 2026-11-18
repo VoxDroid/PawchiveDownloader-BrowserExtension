@@ -189,7 +189,8 @@ export function planPost(
   const inFolder = (name: string) => (folder ? `${folder}/${name}` : name);
 
   const texts: Array<{ name: string; text: string; mime: string }> = [];
-  const hasContent = htmlToText(post.contentHtml).length > 0;
+  const alreadySaved = planned.length > 0 && planned.every((p) => p.skip === 'duplicate');
+  const hasContent = !alreadySaved && htmlToText(post.contentHtml).length > 0;
   if (hasContent && (options.saveContent === 'txt' || options.saveContent === 'both')) {
     texts.push({ name: 'content.txt', text: contentText(post), mime: 'text/plain' });
   }
@@ -286,6 +287,7 @@ export function computeStats(items: readonly Item[]): JobStats {
     active: 0,
     bytes: 0,
     totalBytes: 0,
+    partial: 0,
   };
   for (const item of items) {
     switch (item.status) {
@@ -303,6 +305,7 @@ export function computeStats(items: readonly Item[]): JobStats {
         break;
       case 'active':
         stats.active += 1;
+        if (item.totalBytes > 0) stats.partial += Math.min(1, item.bytes / item.totalBytes);
         break;
     }
     stats.bytes += item.bytes;

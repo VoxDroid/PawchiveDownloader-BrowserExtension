@@ -404,5 +404,10 @@
   "about.privacyBody": "アカウント、トラッキング、解析は一切ありません。設定、履歴、ログはブラウザー内に保存され、通信先は pawchive.pw だけです。",
   "about.source": "ソースコード",
   "about.report": "問題を報告",
-  "about.credits": "フォント: JetBrains Mono Nerd Font (SIL Open Font License 1.1)。WXT、Svelte、fflate で構築。Pawchive とは無関係です。"
+  "about.credits": "フォント: JetBrains Mono Nerd Font (SIL Open Font License 1.1)。WXT、Svelte、fflate で構築。Pawchive とは無関係です。",
+  "support.title": "Pawchive Downloader を気に入っていただけましたか?",
+  "support.body": "無料のオープンソースで、これからもずっと無料です。時間の節約になったら、Ko-fi でコーヒーをおごっていただけると嬉しいです。今後のアップデートの励みになります。",
+  "support.kofi": "Ko-fi で支援する",
+  "support.star": "GitHub でスターを付ける",
+  "support.dismiss": "今後表示しない"
 }

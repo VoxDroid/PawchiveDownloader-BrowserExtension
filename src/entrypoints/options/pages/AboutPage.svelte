@@ -5,8 +5,9 @@
   import Button from '../../../ui/components/Button.svelte';
   import Icon from '../../../ui/components/Icon.svelte';
   import Logo from '../../../ui/components/Logo.svelte';
+  import SupportCard from '../../../ui/components/SupportCard.svelte';
+  import { LINKS } from '../../../lib/links';
 
-  const REPO = 'https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension';
   const version = browser.runtime.getManifest().version;
 
   const FEATURES: Array<[IconName, string]> = [
@@ -35,6 +36,8 @@
     </div>
   </div>
 </div>
+
+<div class="support"><SupportCard /></div>
 
 <section>
   <h2>{t('about.start')}</h2>
@@ -72,23 +75,25 @@
 </section>
 
 <section class="links">
-  <Button icon="github" onclick={() => browser.tabs.create({ url: REPO })}
+  <Button icon="github" onclick={() => browser.tabs.create({ url: LINKS.repo })}
     >{t('about.source')}</Button
   >
-  <Button icon="warning" onclick={() => browser.tabs.create({ url: `${REPO}/issues/new/choose` })}
+  <Button icon="warning" onclick={() => browser.tabs.create({ url: LINKS.issues })}
     >{t('about.report')}</Button
   >
   <Button
     variant="ghost"
     icon="external"
-    onclick={() => browser.tabs.create({ url: 'https://github.com/VoxDroid/KemonoDownloader' })}
-    >KemonoDownloader</Button
+    onclick={() => browser.tabs.create({ url: LINKS.kemonoDownloader })}>KemonoDownloader</Button
   >
 </section>
 
 <p class="credits faint">{t('about.credits')}</p>
 
 <style>
+  .support {
+    margin-bottom: 28px;
+  }
   .hero {
     display: flex;
     align-items: center;

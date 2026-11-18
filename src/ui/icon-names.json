@@ -80,5 +80,9 @@
   "newBox": "md-new_box",
   "rename": "md-rename_box",
   "restore": "md-restore",
-  "hash": "md-pound"
+  "hash": "md-pound",
+  "coffee": "md-coffee_outline",
+  "heart": "md-heart",
+  "heartOutline": "md-heart_outline",
+  "share": "md-share_variant_outline"
 }

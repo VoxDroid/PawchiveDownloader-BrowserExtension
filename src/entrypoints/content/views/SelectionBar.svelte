@@ -75,7 +75,7 @@
         >
       </div>
       <Button
-        variant="primary"
+        variant={prominent ? 'primary' : 'subtle'}
         icon="downloadMultiple"
         block
         disabled={count === 0}

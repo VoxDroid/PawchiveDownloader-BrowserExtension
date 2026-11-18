@@ -462,5 +462,10 @@
   "about.privacyBody": "Ni compte, ni pistage, ni statistiques. Paramètres, historique et journal restent dans votre navigateur ; l'extension ne communique qu'avec pawchive.pw.",
   "about.source": "Code source",
   "about.report": "Signaler un problème",
-  "about.credits": "Police : JetBrains Mono Nerd Font (SIL Open Font License 1.1). Conçu avec WXT, Svelte et fflate. Sans lien avec Pawchive."
+  "about.credits": "Police : JetBrains Mono Nerd Font (SIL Open Font License 1.1). Conçu avec WXT, Svelte et fflate. Sans lien avec Pawchive.",
+  "support.title": "Vous aimez Pawchive Downloader ?",
+  "support.body": "Il est gratuit et open source, et le restera. S'il vous fait gagner du temps, vous pouvez m'offrir un café sur Ko-fi. Cela permet aux mises à jour de continuer.",
+  "support.kofi": "Soutenir sur Ko-fi",
+  "support.star": "Mettre une étoile sur GitHub",
+  "support.dismiss": "Ne plus afficher"
 }

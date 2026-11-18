@@ -107,6 +107,8 @@ export interface JobStats {
   active: number;
   bytes: number;
   totalBytes: number;
+  /** How far the running items are, summed as fractions (0..active). */
+  partial: number;
 }
 
 export interface ScanProgress {

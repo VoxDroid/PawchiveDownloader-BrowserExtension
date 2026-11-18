@@ -11,7 +11,9 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const EXT = resolve('.output/chrome-mv3');
-const OUT = resolve('docs/screenshots');
+// PDL_SHOTS_DIR and PDL_THEME (e.g. light) render review sets elsewhere.
+const OUT = resolve(process.env.PDL_SHOTS_DIR ?? 'docs/screenshots');
+const THEME = process.env.PDL_THEME;
 mkdirSync(OUT, { recursive: true });
 
 const PALETTES = [
@@ -193,6 +195,13 @@ let [sw] = context.serviceWorkers();
 sw ??= await context.waitForEvent('serviceworker');
 const id = new URL(sw.url()).host;
 
+if (THEME) {
+  await sw.evaluate(async (theme) => {
+    const { settings = {} } = await chrome.storage.sync.get('settings');
+    await chrome.storage.sync.set({ settings: { ...settings, theme } });
+  }, THEME);
+}
+
 // Fake transfers that progress over time; some finish, some keep running.
 await sw.evaluate(() => {
   const started = new Map();
@@ -281,7 +290,14 @@ await sw.evaluate(async () => {
 });
 
 const dash = await context.newPage();
-for (const route of ['downloads', 'history', 'watchlist', 'settings']) {
+const routes = [
+  'downloads',
+  'history',
+  'watchlist',
+  'settings',
+  ...(process.env.PDL_SHOTS_DIR ? ['about', 'logs'] : []),
+];
+for (const route of routes) {
   await dash.goto(`chrome-extension://${id}/options.html#${route}`);
   await dash.waitForTimeout(1500);
   await dash.screenshot({ path: join(OUT, `dashboard-${route}.png`) });

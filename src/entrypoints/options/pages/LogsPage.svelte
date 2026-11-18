@@ -220,5 +220,6 @@
   }
   .detail {
     color: var(--text-faint);
+    margin-left: 1ch;
   }
 </style>
