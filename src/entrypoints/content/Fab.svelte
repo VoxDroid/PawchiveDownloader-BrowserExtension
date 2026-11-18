@@ -2,7 +2,7 @@
   import { fade, scale } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { app, overallProgress, t } from '../../ui/state/app.svelte';
-  import Icon from '../../ui/components/Icon.svelte';
+  import Logo from '../../ui/components/Logo.svelte';
   import { page, selectedCount } from './page.svelte';
 
   const progress = $derived(overallProgress(app.jobs));
@@ -19,8 +19,6 @@
     class="fab {corner}"
     class:busy={progress.active > 0}
     aria-label={t('fab.label')}
-    data-tip={t('fab.tooltip')}
-    data-tip-side={corner.startsWith('top') ? 'bottom' : undefined}
     onclick={() => (page.panelOpen = !page.panelOpen)}
     transition:scale={{ start: 0.6, duration: 220, easing: cubicOut }}
   >
@@ -38,7 +36,8 @@
         />
       {/if}
     </svg>
-    <span class="glyph"><Icon name={progress.active > 0 ? 'download' : 'paw'} size={22} /></span>
+    <span class="glyph"><Logo size={38} /></span>
+    <span class="tip" role="tooltip">{t('fab.tooltip')}</span>
     {#if count > 0 || progress.active > 0}
       <span class="badge mono-num" transition:scale={{ duration: 180 }}
         >{count > 0 ? count : progress.active}</span
@@ -118,10 +117,70 @@
   .glyph {
     display: grid;
     place-items: center;
-    color: var(--accent-strong);
+    transform-origin: 50% 80%;
+    transition: transform var(--dur) var(--ease-spring);
   }
+  .fab:hover .glyph {
+    transform: rotate(-10deg) scale(1.06);
+  }
+  /* While downloading, the paw taps like a cat batting at something. */
   .busy .glyph {
-    animation: pdl-pulse 1.6s var(--ease) infinite;
+    animation: paw-tap 1.4s var(--ease) infinite;
+  }
+  @keyframes paw-tap {
+    0%,
+    55%,
+    100% {
+      transform: translateY(0) rotate(0) scale(1);
+    }
+    20% {
+      transform: translateY(-4px) rotate(-8deg) scale(1.04);
+    }
+    35% {
+      transform: translateY(1px) rotate(2deg) scale(0.96, 1.02);
+    }
+  }
+  /* Opens toward the middle of the screen from whichever corner it sits in. */
+  .tip {
+    position: absolute;
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elev-3);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition:
+      opacity var(--dur-fast) var(--ease),
+      transform var(--dur-fast) var(--ease);
+  }
+  .fab:hover .tip,
+  .fab:focus-visible .tip {
+    opacity: 1;
+    transform: none;
+    transition-delay: 350ms;
+  }
+  .bottom-right .tip,
+  .bottom-left .tip {
+    bottom: calc(100% + 12px);
+  }
+  .top-right .tip,
+  .top-left .tip {
+    top: calc(100% + 12px);
+    transform: translateY(-4px);
+  }
+  .bottom-right .tip,
+  .top-right .tip {
+    right: 0;
+  }
+  .bottom-left .tip,
+  .top-left .tip {
+    left: 0;
   }
   .badge {
     position: absolute;
