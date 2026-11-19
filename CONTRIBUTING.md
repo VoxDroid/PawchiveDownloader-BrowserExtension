@@ -69,4 +69,4 @@ line, then what changed and why.
 ## Pull requests
 
 Fill in the template, link the issue, and include screenshots for visible
-changes. CI must be green before review.
+changes. CI must be green before review. What CI runs is described in [docs/CI.md](docs/CI.md).

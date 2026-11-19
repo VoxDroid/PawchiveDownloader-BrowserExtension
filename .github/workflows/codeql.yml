@@ -1,11 +1,16 @@
 name: CodeQL
 
+# Code scanning is free for public repositories. Private repositories need
+# GitHub Advanced Security, so the scan is skipped there unless the
+# repository variable CODEQL_ENABLED is set to "true". See docs/CI.md.
+
 on:
   push:
     branches: [main]
   pull_request:
   schedule:
     - cron: '23 4 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +19,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze (JavaScript and TypeScript)
+    if: github.event.repository.private == false || vars.CODEQL_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -1,10 +1,20 @@
 name: CI
 
+# What runs is decided by the `config` job below. It adapts to the
+# repository's visibility (private repositories spend Actions minutes, and
+# macOS and Windows minutes count 10x and 2x) and can be tuned without editing
+# this file through repository variables. See docs/CI.md.
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      full:
+        description: Run everything (all operating systems and browsers), ignoring the private-repo savings
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -14,19 +24,69 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  NODE_VERSION: '22'
-
 jobs:
+  config:
+    name: Plan the run
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.plan.outputs.node }}
+      oses: ${{ steps.plan.outputs.oses }}
+      browsers: ${{ steps.plan.outputs.browsers }}
+      e2e: ${{ steps.plan.outputs.e2e }}
+      coverage: ${{ steps.plan.outputs.coverage }}
+    steps:
+      - id: plan
+        env:
+          PRIVATE: ${{ github.event.repository.private }}
+          FULL: ${{ inputs.full }}
+          NODE: ${{ vars.CI_NODE_VERSION }}
+          OSES: ${{ vars.CI_OSES }}
+          OSES_PRIVATE: ${{ vars.CI_OSES_PRIVATE }}
+          BROWSERS: ${{ vars.CI_BROWSERS }}
+          E2E: ${{ vars.CI_E2E }}
+          COVERAGE: ${{ vars.CI_COVERAGE }}
+        run: |
+          all_oses='["ubuntu-latest","windows-latest","macos-latest"]'
+          if [ "$FULL" = "true" ]; then
+            oses="$all_oses"
+          elif [ "$PRIVATE" = "true" ]; then
+            oses="${OSES_PRIVATE:-[\"ubuntu-latest\"]}"
+          else
+            oses="${OSES:-$all_oses}"
+          fi
+          browsers="${BROWSERS:-[\"chrome\",\"firefox\",\"edge\"]}"
+          [ "$FULL" = "true" ] && browsers='["chrome","firefox","edge"]'
+          {
+            echo "node=${NODE:-22}"
+            echo "oses=$oses"
+            echo "browsers=$browsers"
+            echo "e2e=${E2E:-true}"
+            echo "coverage=${COVERAGE:-true}"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### CI plan"
+            echo
+            echo "| Setting | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | $([ "$PRIVATE" = "true" ] && echo private || echo public) |"
+            echo "| Full run requested | ${FULL:-false} |"
+            echo "| Node.js | ${NODE:-22} |"
+            echo "| Unit test systems | \`$oses\` |"
+            echo "| Browser builds | \`$browsers\` |"
+            echo "| End-to-end tests | ${E2E:-true} |"
+            echo "| Coverage upload | ${COVERAGE:-true} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   quality:
     name: Lint, format, types and translations
+    needs: config
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.config.outputs.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: ESLint
@@ -40,23 +100,24 @@ jobs:
 
   unit:
     name: Unit tests (${{ matrix.os }})
+    needs: config
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ fromJSON(needs.config.outputs.oses) }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.config.outputs.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Vitest with coverage
         run: pnpm test:coverage
       - name: Upload coverage
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && needs.config.outputs.coverage == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: coverage
@@ -65,24 +126,25 @@ jobs:
 
   build:
     name: Build ${{ matrix.browser }}
+    needs: config
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome, firefox, edge]
+        browser: ${{ fromJSON(needs.config.outputs.browsers) }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.config.outputs.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Build and zip
         run: pnpm wxt zip -b ${{ matrix.browser }}
       - name: Lint with Mozilla's add-on linter
         if: matrix.browser == 'firefox'
-        run: pnpm web-ext lint --source-dir .output/firefox-mv3 --self-hosted
+        run: pnpm lint:firefox
       - uses: actions/upload-artifact@v7
         with:
           name: extension-${{ matrix.browser }}
@@ -91,13 +153,15 @@ jobs:
 
   e2e:
     name: End-to-end (Chromium)
+    needs: config
+    if: needs.config.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.config.outputs.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install Chromium

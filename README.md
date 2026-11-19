@@ -200,7 +200,7 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Translations 
 
 ### Quality gates
 
-CI runs on every push and pull request: ESLint, Prettier, `svelte-check`, the translation checker, unit tests with coverage on Linux, Windows and macOS, builds for Chrome, Edge and Firefox with Mozilla's add-on linter, and the Playwright suite. CodeQL scans the code and Dependabot keeps dependencies current. Tagged releases build every package and publish a GitHub release, and can submit to the stores.
+CI runs on every push and pull request: ESLint, Prettier, `svelte-check`, the translation checker, unit tests with coverage on Linux, Windows and macOS, builds for Chrome, Edge and Firefox with Mozilla's add-on linter, and the Playwright suite. CodeQL scans the code and Dependabot keeps dependencies current. Tagged releases build every package and publish a GitHub release, and can submit to the stores. The workflows adapt to whether the repository is private or public and can be tuned with repository variables; see [docs/CI.md](docs/CI.md).
 
 ## Project structure
 
