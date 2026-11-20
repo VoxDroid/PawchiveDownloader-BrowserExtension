@@ -1,4 +1,5 @@
 import type { PostFile, RelayLink } from './types';
+import { decodeEntities as decode } from './text';
 import { canonicalPath, isSiteHost } from './urls';
 
 /**
@@ -22,16 +23,6 @@ function attributes(source: string): Record<string, string> {
     attrs[name] = decode(match[3] ?? match[4] ?? match[5] ?? '');
   }
   return attrs;
-}
-
-function decode(value: string): string {
-  return value
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&#x27;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&#(\d+);/g, (_m, code) => String.fromCodePoint(Number(code)));
 }
 
 export function isRelayUrl(url: string): boolean {
@@ -60,16 +51,23 @@ export interface RelayIndex {
   byName: Map<string, RelayLink>;
 }
 
+/** The URL's file name, or '' when it is not valid percent-encoding. */
+function lastSegment(url: string): string {
+  const segment = new URL(url).pathname.split('/').pop() ?? '';
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return '';
+  }
+}
+
 export function parseRelayLinks(html: string): RelayIndex {
   const index: RelayIndex = { byPath: new Map(), byName: new Map() };
   for (const match of html.matchAll(ANCHOR_RE)) {
     const attrs = attributes(match[1] ?? '');
     const href = attrs.href;
     if (!href || !isRelayUrl(href)) continue;
-    const name =
-      attrs.download?.trim() ||
-      decodeURIComponent(new URL(href).pathname.split('/').pop() ?? '') ||
-      null;
+    const name = attrs.download?.trim() || lastSegment(href) || null;
     const link: RelayLink = { url: href, expiresAt: expiryOf(href), name };
 
     const img = IMG_RE.exec(match[2] ?? '');
