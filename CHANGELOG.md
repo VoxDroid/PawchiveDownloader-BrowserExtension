@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- **Safer post text**: HTML entities in post text and file names are decoded
+  in one pass, so text that shows `&amp;lt;` is no longer turned into `<`, and
+  tags are removed until none is left, so pieces like `<<b>script>` cannot form
+  a new one (three code scanning alerts). An entity with an impossible number
+  (such as `&#99999999;`) or a file link with broken percent-encoding no
+  longer stops a post's preview-only files from being found.
+
 ## [1.0.0] - 2026-11-20
 
 First release of the rebuilt extension, the browser companion to the
