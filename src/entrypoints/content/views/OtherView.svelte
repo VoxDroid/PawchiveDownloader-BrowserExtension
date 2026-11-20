@@ -4,9 +4,12 @@
   import Empty from '../../../ui/components/Empty.svelte';
   import type { CardController } from '../cards';
   import { page } from '../page.svelte';
+  import { siteFromHost } from '../../../lib/pawchive/sites';
+  import { pageUrls } from '../../../lib/pawchive/urls';
   import SelectionBar from './SelectionBar.svelte';
 
   let { cards }: { cards: CardController | null } = $props();
+  const site = siteFromHost(location.hostname) ?? 'pawchive';
 </script>
 
 <div class="view">
@@ -14,13 +17,11 @@
     <SelectionBar {cards} prominent />
   {/if}
   <Empty icon="paw" title={t('other.title')} body={t('other.body')}>
-    <Button icon="search" onclick={() => (location.href = 'https://pawchive.pw/posts')}
+    <Button icon="search" onclick={() => (location.href = pageUrls.recent(site))}
       >{t('other.browse')}</Button
     >
-    <Button
-      variant="ghost"
-      icon="account"
-      onclick={() => (location.href = 'https://pawchive.pw/artists')}>{t('other.creators')}</Button
+    <Button variant="ghost" icon="account" onclick={() => (location.href = pageUrls.creators(site))}
+      >{t('other.creators')}</Button
     >
   </Empty>
 </div>

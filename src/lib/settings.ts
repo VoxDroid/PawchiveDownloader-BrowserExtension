@@ -4,6 +4,7 @@ import {
   DEFAULT_ARCHIVE_TEMPLATE,
   DEFAULT_FILE_TEMPLATE,
   DEFAULT_FOLDER_TEMPLATE,
+  OLD_DEFAULT_FOLDER_TEMPLATE,
   validateTemplate,
 } from './download/template';
 
@@ -159,7 +160,9 @@ export function coerceSettings(input: unknown): Settings {
       d.requestIntervalMs,
     ),
     maxRetries: intIn(s.maxRetries, 0, 20, d.maxRetries),
-    folderTemplate: template(s.folderTemplate, 'folder', d.folderTemplate),
+    folderTemplate: ((value) => (value === OLD_DEFAULT_FOLDER_TEMPLATE ? d.folderTemplate : value))(
+      template(s.folderTemplate, 'folder', d.folderTemplate),
+    ),
     fileTemplate: template(s.fileTemplate, 'file', d.fileTemplate),
     archiveTemplate: template(s.archiveTemplate, 'file', d.archiveTemplate),
     conflictAction: oneOf(

@@ -1,14 +1,26 @@
+import { fileHostLinks, findPasswords } from './links';
+import { qualify, siteFromUrl, type Site } from './sites';
+import { decodeEntities, htmlToText } from './text';
 import type {
+  Announcement,
+  Comment,
   Creator,
+  CreatorEntry,
   FileCategory,
   FileRole,
+  LinkedAccount,
   Post,
   PostFile,
+  RawAnnouncement,
+  RawComment,
+  RawCreatorEntry,
   RawFile,
   RawPost,
   RawProfile,
 } from './types';
-import { fileUrl, hashFromPath, isSiteUrl, pageUrls, thumbnailUrl } from './urls';
+import { fileUrl, hashFromPath, pageUrls, thumbnailUrl } from './urls';
+
+export { htmlToText };
 
 const CATEGORY_EXTENSIONS: Record<Exclude<FileCategory, 'other'>, readonly string[]> = {
   image: [
@@ -65,12 +77,12 @@ export function categoryOf(ext: string): FileCategory {
   return EXT_TO_CATEGORY.get(ext.toLowerCase()) ?? 'other';
 }
 
-function buildFile(raw: RawFile, role: FileRole, index: number): PostFile | null {
+function buildFile(site: Site, raw: RawFile, role: FileRole, index: number): PostFile | null {
   if (!raw.path) return null;
   const info = hashFromPath(raw.path);
   const name = raw.name?.trim() || raw.path.split('/').pop() || `file-${index}`;
   const ext = extensionOf(name) || info?.ext || '';
-  const url = fileUrl(raw);
+  const url = fileUrl(raw, site);
   return {
     index,
     role,
@@ -79,7 +91,7 @@ function buildFile(raw: RawFile, role: FileRole, index: number): PostFile | null
     hash: info?.hash ?? null,
     path: raw.path,
     url,
-    thumbnailUrl: THUMBNAIL_EXTENSIONS.has(ext) ? thumbnailUrl(raw.path) : null,
+    thumbnailUrl: THUMBNAIL_EXTENSIONS.has(ext) ? thumbnailUrl(raw.path, site) : null,
     previewOnly: url === null,
     category: categoryOf(ext),
   };
@@ -87,8 +99,12 @@ function buildFile(raw: RawFile, role: FileRole, index: number): PostFile | null
 
 const IMG_SRC_RE = /<img\b[^>]*?\bsrc\s*=\s*(["'])(.*?)\1/gi;
 
-/** Images embedded in the post body that live on Pawchive's own servers. */
-export function inlineImages(contentHtml: string): RawFile[] {
+/**
+ * Images embedded in the post body that live on the site's own servers. On
+ * Pawchive a bare `/data/...` path is only a preview; Kemono and Coomer serve
+ * the full file there.
+ */
+export function inlineImages(contentHtml: string, site: Site = 'pawchive'): RawFile[] {
   const found: RawFile[] = [];
   for (const match of contentHtml.matchAll(IMG_SRC_RE)) {
     const src = decodeEntities(match[2] ?? '').trim();
@@ -96,10 +112,14 @@ export function inlineImages(contentHtml: string): RawFile[] {
     if (src.startsWith('/data/') || src.startsWith('/')) {
       if (!hashFromPath(src)) continue;
       const path = src.replace(/^\/data/, '').split('?')[0] as string;
-      found.push({ path, name: path.split('/').pop(), preview_only: true });
+      found.push({
+        path,
+        name: path.split('/').pop(),
+        ...(site === 'pawchive' ? { preview_only: true } : {}),
+      });
       continue;
     }
-    if (!isSiteUrl(src)) continue;
+    if (siteFromUrl(src) === null) continue;
     const url = new URL(src);
     const path = url.pathname.replace(/^\/data/, '');
     if (!hashFromPath(path)) continue;
@@ -109,31 +129,23 @@ export function inlineImages(contentHtml: string): RawFile[] {
   return found;
 }
 
-function decodeEntities(value: string): string {
-  return value
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&#x27;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
-}
-
 /**
  * Turns an API post into the extension's model. The API repeats the main file
  * among the attachments, and the body may embed the same images again, so
  * files are de-duplicated by content hash (or path when there is none).
  */
-export function normalizePost(raw: RawPost): Post {
+export function normalizePost(raw: RawPost, site: Site = 'pawchive'): Post {
+  const service = qualify(site, raw.service);
   const contentHtml = raw.content ?? raw.substring ?? '';
   const candidates: Array<[RawFile, FileRole]> = [];
   if (raw.file && raw.file.path) candidates.push([raw.file, 'file']);
   for (const attachment of raw.attachments ?? []) candidates.push([attachment, 'attachment']);
-  for (const inline of inlineImages(contentHtml)) candidates.push([inline, 'inline']);
+  for (const inline of inlineImages(contentHtml, site)) candidates.push([inline, 'inline']);
 
   const seen = new Set<string>();
   const files: PostFile[] = [];
   for (const [rawFile, role] of candidates) {
-    const file = buildFile(rawFile, role, files.length + 1);
+    const file = buildFile(site, rawFile, role, files.length + 1);
     if (!file) continue;
     const key = file.hash ?? file.path;
     if (seen.has(key)) continue;
@@ -143,7 +155,7 @@ export function normalizePost(raw: RawPost): Post {
 
   return {
     id: String(raw.id),
-    service: raw.service,
+    service,
     creatorId: String(raw.user),
     title: (raw.title ?? '').trim(),
     contentHtml,
@@ -152,9 +164,12 @@ export function normalizePost(raw: RawPost): Post {
     edited: raw.edited ?? null,
     tags: Array.isArray(raw.tags) ? raw.tags.filter((t) => typeof t === 'string') : [],
     files,
-    url: pageUrls.post(raw.service, String(raw.user), String(raw.id)),
-    nextId: raw.next ?? null,
-    prevId: raw.prev ?? null,
+    url: pageUrls.post(service, String(raw.user), String(raw.id)),
+    nextId: raw.next != null && raw.next !== '' ? String(raw.next) : null,
+    prevId: raw.prev != null && raw.prev !== '' ? String(raw.prev) : null,
+    incomplete: (raw.attachments ?? []).some((a) => !a || !a.path),
+    links: fileHostLinks(contentHtml),
+    passwords: findPasswords(contentHtml),
   };
 }
 
@@ -164,36 +179,58 @@ function toIsoDate(value: string | number | null | undefined): string | null {
   return value;
 }
 
-export function normalizeCreator(raw: RawProfile): Creator {
+export function normalizeCreator(raw: RawProfile, site: Site = 'pawchive'): Creator {
+  const service = qualify(site, raw.service);
   return {
     id: String(raw.id),
-    service: raw.service,
+    service,
     name: raw.name?.trim() || String(raw.id),
     publicId: raw.public_id ?? null,
-    url: pageUrls.creator(raw.service, String(raw.id)),
-    iconUrl: pageUrls.icon(raw.service, String(raw.id)),
-    bannerUrl: pageUrls.banner(raw.service, String(raw.id)),
+    url: pageUrls.creator(service, String(raw.id)),
+    iconUrl: pageUrls.icon(service, String(raw.id)),
+    bannerUrl: pageUrls.banner(service, String(raw.id)),
     updated: toIsoDate(raw.updated),
   };
 }
 
-/** Converts post body HTML into readable plain text for `content.txt`. */
-export function htmlToText(html: string): string {
-  return decodeEntities(
-    html
-      .replace(/\r\n?/g, '\n')
-      .replace(/<\s*br\s*\/?>/gi, '\n')
-      .replace(/<\s*\/\s*(p|div|h[1-6]|li|blockquote|pre|tr)\s*>/gi, '\n')
-      .replace(/<\s*li\b[^>]*>/gi, '- ')
-      .replace(/<a\b[^>]*?href\s*=\s*(["'])(.*?)\1[^>]*>(.*?)<\/a>/gi, (_m, _q, href, text) =>
-        text && text !== href ? `${text} (${href})` : href,
-      )
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' '),
-  )
-    .split('\n')
-    .map((line) => line.trimEnd())
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+function toEpochSeconds(value: string | number | undefined): number {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
+}
+
+export function normalizeCreatorEntry(raw: RawCreatorEntry, site: Site): CreatorEntry {
+  return {
+    id: String(raw.id),
+    service: qualify(site, raw.service),
+    name: (raw.name ?? '').trim() || String(raw.id),
+    favorited: typeof raw.favorited === 'number' ? raw.favorited : 0,
+    updated: toEpochSeconds(raw.updated ?? raw.indexed),
+  };
+}
+
+export function normalizeLinkedAccount(
+  raw: { id: string | number; service: string; name?: string | null },
+  site: Site,
+): LinkedAccount {
+  return {
+    id: String(raw.id),
+    service: qualify(site, raw.service),
+    name: raw.name?.trim() || String(raw.id),
+  };
+}
+
+export function normalizeComment(raw: RawComment): Comment {
+  return {
+    id: String(raw.id),
+    parentId: raw.parent_id != null && raw.parent_id !== '' ? String(raw.parent_id) : null,
+    author: raw.commenter_name?.trim() || 'Anonymous',
+    content: raw.content ?? '',
+    published: raw.published ?? null,
+  };
+}
+
+export function normalizeAnnouncement(raw: RawAnnouncement): Announcement {
+  return { content: raw.content ?? '', published: raw.published ?? raw.added ?? null };
 }

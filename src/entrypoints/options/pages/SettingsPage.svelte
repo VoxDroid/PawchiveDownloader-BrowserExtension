@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SITE_MATCHES } from '../../../lib/pawchive/sites';
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { browser } from 'wxt/browser';
@@ -64,7 +65,7 @@
   const archiveExample = $derived(buildArchivePath(s.folderTemplate, s.archiveTemplate, SAMPLE));
 
   const MB = (n: number) => (n >= 1024 ? `${(n / 1024).toLocaleString()} GB` : `${n} MB`);
-  const HOSTS = ['https://pawchive.pw/*', 'https://*.pawchive.pw/*'];
+  const HOSTS = [...SITE_MATCHES];
 
   onMount(async () => {
     commands = (await browser.commands.getAll().catch(() => [])) as typeof commands;

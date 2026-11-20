@@ -17,7 +17,8 @@ import {
 } from '../lib/messages';
 import { SiteLimiter } from '../lib/net/limiter';
 import { PawchiveClient } from '../lib/pawchive/client';
-import { parsePageUrl, SITE_ORIGIN } from '../lib/pawchive/urls';
+import { SITE_PAGE_MATCHES, SITES, SITE_IDS } from '../lib/pawchive/sites';
+import { parsePageUrl } from '../lib/pawchive/urls';
 import { DEFAULT_SETTINGS, resolveLocale, type Locale, type Settings } from '../lib/settings';
 import * as db from '../lib/storage/db';
 import { loadSettings, watchSettings } from '../lib/storage/settings-store';
@@ -33,8 +34,15 @@ import { localZipPort, offscreenZipPort, textObjectUrl } from '../lib/zip/hosts'
 
 const IS_FIREFOX = import.meta.env.BROWSER === 'firefox';
 const WATCH_ALARM = 'watch-check';
-const POST_LINK = `${SITE_ORIGIN}/*/user/*/post/*`;
-const CREATOR_LINK = `${SITE_ORIGIN}/*/user/*`;
+const SITE_DOMAINS = SITE_IDS.flatMap((s) => SITES[s].domains);
+const POST_LINKS = SITE_DOMAINS.flatMap((d) => [
+  `https://${d}/*/user/*/post/*`,
+  `https://www.${d}/*/user/*/post/*`,
+]);
+const CREATOR_LINKS = SITE_DOMAINS.flatMap((d) => [
+  `https://${d}/*/user/*`,
+  `https://www.${d}/*/user/*`,
+]);
 
 const jobsItem = storage.defineItem<Job[]>('local:jobs', { fallback: [] });
 const watchItem = storage.defineItem<WatchEntry[]>('local:watchlist', { fallback: [] });
@@ -341,25 +349,25 @@ export default defineBackground({
         id: 'download-post-link',
         title: t('menu.downloadPost'),
         contexts: ['link'],
-        targetUrlPatterns: [POST_LINK],
+        targetUrlPatterns: POST_LINKS,
       });
       create({
         id: 'download-creator-link',
         title: t('menu.downloadCreator'),
         contexts: ['link'],
-        targetUrlPatterns: [CREATOR_LINK],
+        targetUrlPatterns: CREATOR_LINKS,
       });
       create({
         id: 'watch-creator-link',
         title: t('menu.watchCreator'),
         contexts: ['link'],
-        targetUrlPatterns: [CREATOR_LINK],
+        targetUrlPatterns: CREATOR_LINKS,
       });
       create({
         id: 'open-panel',
         title: t('menu.openPanel'),
         contexts: ['page'],
-        documentUrlPatterns: [`${SITE_ORIGIN}/*`],
+        documentUrlPatterns: [...SITE_PAGE_MATCHES],
       });
     }
 

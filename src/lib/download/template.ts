@@ -1,9 +1,10 @@
+import { siteName, splitService } from '../pawchive/sites';
 import { sanitizePath, sanitizeSegment } from './sanitize';
 
 /**
  * Path templates such as `Pawchive/{creator}/{published:YYYY-MM-DD} {title}`.
  *
- * Tokens: {service} {creator} {creator_id} {post_id} {title} {published}
+ * Tokens: {site} {service} {creator} {creator_id} {post_id} {title} {published}
  * {added} {date} {index} {count} {name} {filename} {ext} {hash} {role}.
  * Date tokens take a format after a colon (YYYY MM DD HH mm ss), {index}
  * takes a zero-padding width ({index:3} -> 007) and {hash} a length.
@@ -31,6 +32,7 @@ export interface NameContext {
 }
 
 export const TEMPLATE_TOKENS = [
+  'site',
   'service',
   'creator',
   'creator_id',
@@ -53,6 +55,9 @@ export type TemplateToken = (typeof TEMPLATE_TOKENS)[number];
 const TOKEN_RE = /\{([a-z_]+)(?::([^{}]*))?\}/gi;
 
 export const DEFAULT_FOLDER_TEMPLATE =
+  '{site}/{creator} ({service})/{published:YYYY-MM-DD} {title} [{post_id}]';
+/** The default before other sites existed; moved to the new one on load. */
+export const OLD_DEFAULT_FOLDER_TEMPLATE =
   'Pawchive/{creator} ({service})/{published:YYYY-MM-DD} {title} [{post_id}]';
 export const DEFAULT_FILE_TEMPLATE = '{index:2}_{filename}';
 export const DEFAULT_ARCHIVE_TEMPLATE = '{creator} - {published:YYYY-MM-DD} {title} [{post_id}]';
@@ -66,9 +71,9 @@ export const FILE_TEMPLATE_PRESETS = {
 
 export const FOLDER_TEMPLATE_PRESETS = {
   byPost: DEFAULT_FOLDER_TEMPLATE,
-  byCreator: 'Pawchive/{creator} ({service})',
-  flat: 'Pawchive',
-  byDate: 'Pawchive/{creator} ({service})/{published:YYYY}/{published:MM}/{title} [{post_id}]',
+  byCreator: '{site}/{creator} ({service})',
+  flat: '{site}',
+  byDate: '{site}/{creator} ({service})/{published:YYYY}/{published:MM}/{title} [{post_id}]',
 } as const;
 
 function pad(value: number, width: number): string {
@@ -132,7 +137,9 @@ function stem(fileName: string, ext: string): string {
 function tokenValue(token: string, arg: string | undefined, ctx: NameContext): string | undefined {
   switch (token.toLowerCase()) {
     case 'service':
-      return ctx.service;
+      return splitService(ctx.service).bare;
+    case 'site':
+      return siteName(splitService(ctx.service).site);
     case 'creator':
       return ctx.creatorName || ctx.creatorId;
     case 'creator_id':

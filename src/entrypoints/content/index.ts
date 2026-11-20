@@ -12,7 +12,24 @@ import '../../ui/styles/theme.css';
 import '../../ui/styles/base.css';
 
 export default defineContentScript({
-  matches: ['https://pawchive.pw/*'],
+  // Every page domain of Pawchive, Kemono and Coomer (kept in step with
+  // SITE_PAGE_MATCHES in lib/pawchive/sites.ts; a test checks they agree).
+  matches: [
+    'https://pawchive.pw/*',
+    'https://www.pawchive.pw/*',
+    'https://kemono.cr/*',
+    'https://www.kemono.cr/*',
+    'https://kemono.su/*',
+    'https://www.kemono.su/*',
+    'https://kemono.party/*',
+    'https://www.kemono.party/*',
+    'https://coomer.st/*',
+    'https://www.coomer.st/*',
+    'https://coomer.su/*',
+    'https://www.coomer.su/*',
+    'https://coomer.party/*',
+    'https://www.coomer.party/*',
+  ],
   runAt: 'document_idle',
   cssInjectionMode: 'ui',
   async main(ctx) {

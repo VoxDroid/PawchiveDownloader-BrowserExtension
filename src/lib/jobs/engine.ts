@@ -19,6 +19,12 @@ import type {
   PostRef,
   ZipItem,
 } from './types';
+import { siteOfService, siteOrigin } from '../pawchive/sites';
+
+/** The site an item belongs to, as a URL the limiter can key on. */
+function siteUrlOf(item: { post: { service: string } }): string {
+  return `${siteOrigin(siteOfService(item.post.service))}/`;
+}
 
 export type DownloadState = 'in_progress' | 'interrupted' | 'complete';
 
@@ -485,7 +491,7 @@ export class DownloadEngine {
     const active: Active = { jobId: job.id, itemId: item.id, abort: new AbortController() };
     this.active.set(item.id + job.id, active);
     void (async () => {
-      active.release = await this.deps.limiter.acquire('https://pawchive.pw/', active.abort.signal);
+      active.release = await this.deps.limiter.acquire(siteUrlOf(item), active.abort.signal);
       const state = await this.waitFor(downloadId, item);
       this.finishDownload(item, state);
     })()
@@ -545,7 +551,7 @@ export class DownloadEngine {
   private async runZip(job: Job, item: ZipItem, active: Active): Promise<void> {
     const { limiter, downloads, log } = this.deps;
     const signal = active.abort.signal;
-    active.release = await limiter.acquire('https://pawchive.pw/', signal);
+    active.release = await limiter.acquire(siteUrlOf(item), signal);
 
     const entries: ZipSpec['entries'] = [];
     for (const entry of item.entries) {
@@ -696,10 +702,7 @@ export class DownloadEngine {
         // Network and server errors may be the site throttling us: slow
         // everyone down, and fetch relay links afresh in case they expired.
         if (code.startsWith('SERVER') || code.startsWith('NETWORK') || code === 'FAILED') {
-          const url =
-            item.kind === 'file'
-              ? (item.source.url ?? 'https://pawchive.pw/')
-              : 'https://pawchive.pw/';
+          const url = item.kind === 'file' ? (item.source.url ?? siteUrlOf(item)) : siteUrlOf(item);
           this.deps.limiter.penalize(url, item.attempts - 1);
         }
         if (item.kind === 'file' && item.source.relay) this.relays.delete(postKey(item.post));

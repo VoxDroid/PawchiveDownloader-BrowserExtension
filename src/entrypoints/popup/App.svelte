@@ -5,6 +5,7 @@
   import { call } from '../../lib/messages';
   import type { PageRef } from '../../lib/pawchive/types';
   import { parsePageUrl, SITE_ORIGIN } from '../../lib/pawchive/urls';
+  import { isSitePageHost } from '../../lib/pawchive/sites';
   import { watchKey } from '../../lib/watch';
   import { LINKS } from '../../lib/links';
   import { app, overallProgress, t, themeDocument, fmt } from '../../ui/state/app.svelte';
@@ -46,7 +47,11 @@
     const [active] = await browser.tabs.query({ active: true, currentWindow: true });
     tab = { id: active?.id, url: active?.url ?? '', title: active?.title ?? '' };
     ref = parsePageUrl(tab.url);
-    onSite = tab.url.startsWith(SITE_ORIGIN);
+    try {
+      onSite = isSitePageHost(new URL(tab.url).hostname);
+    } catch {
+      onSite = false;
+    }
     if (ref.kind === 'creator' || ref.kind === 'post') {
       const key = watchKey(ref.service, ref.creatorId);
       watching = (await call('watch:list').catch(() => [])).some((e) => e.key === key);
