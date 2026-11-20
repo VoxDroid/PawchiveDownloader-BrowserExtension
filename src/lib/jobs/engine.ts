@@ -132,6 +132,7 @@ export class DownloadEngine {
   private readonly resolving = new Map<string, AbortController>();
   private wakeTimer: unknown = null;
   private saveTimer: unknown = null;
+  private saveDue = 0;
   private readonly now: () => number;
   private readonly setTimer: (fn: () => void, ms: number) => unknown;
   private readonly clearTimer: (handle: unknown) => void;
@@ -244,9 +245,16 @@ export class DownloadEngine {
     this.persist();
   }
 
-  private persist(immediate = false): void {
+  /**
+   * Saves the queue: within a second normally, or within 200 ms when it
+   * matters (a browser download just started and its id must survive the
+   * worker stopping). Saves are coalesced either way: a creator with
+   * thousands of files would otherwise write the whole queue for every file.
+   */
+  private persist(soon = false): void {
+    const delay = soon ? 200 : 1000;
     if (this.saveTimer !== null) {
-      if (!immediate) return;
+      if (!soon || this.saveDue <= this.now() + delay) return;
       this.clearTimer(this.saveTimer);
     }
     const save = () => {
@@ -255,8 +263,8 @@ export class DownloadEngine {
         .save(this.jobs)
         .catch((error) => this.deps.log.warn('Could not save jobs', error));
     };
-    if (immediate) save();
-    else this.saveTimer = this.setTimer(save, 1000);
+    this.saveDue = this.now() + delay;
+    this.saveTimer = this.setTimer(save, delay);
   }
 
   // ------------------------------------------------------------ creating

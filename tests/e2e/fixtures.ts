@@ -68,6 +68,40 @@ async function mockSite(context: BrowserContext): Promise<void> {
   });
 }
 
+export const KEMONO_POST_URL = 'https://kemono.cr/fanbox/user/9/post/77';
+
+/** A fake Kemono: posts wrapped in { post }, files without a media server. */
+async function mockKemono(context: BrowserContext): Promise<void> {
+  const base = JSON.parse(readFileSync(join(FIXTURES, 'post-full.json'), 'utf8'));
+  const strip = (f: { server?: string } | null) => {
+    if (!f) return f;
+    const { server: _server, ...rest } = f;
+    return rest;
+  };
+  const post = {
+    ...base,
+    id: '77',
+    user: '9',
+    service: 'fanbox',
+    title: 'Kemono set',
+    content: '<p>Full set: https://mega.nz/folder/abc#key</p><p>Password: cat123</p>',
+    file: strip(base.file),
+    attachments: (base.attachments ?? []).map(strip),
+  };
+  await context.route(/^https:\/\/([a-z0-9]+\.)?kemono\.cr\//, async (route) => {
+    const url = new URL(route.request().url());
+    const json = (body: unknown) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+    if (url.hostname !== 'kemono.cr' || url.pathname.startsWith('/data/'))
+      return route.fulfill({ status: 200, contentType: 'image/png', body: PNG });
+    if (url.pathname.endsWith('/profile'))
+      return json({ id: '9', name: 'Kemo', service: 'fanbox' });
+    if (url.pathname.endsWith('/links')) return json([]);
+    if (url.pathname.startsWith('/api/v1/')) return json({ post });
+    return route.fulfill({ status: 200, contentType: 'text/html', body: postPage('Kemono set') });
+  });
+}
+
 export interface Fixtures {
   context: BrowserContext;
   worker: Worker;
@@ -87,6 +121,7 @@ export const test = base.extend<Fixtures>({
       },
     );
     await mockSite(context);
+    await mockKemono(context);
     await use(context);
     await context.close();
   },
