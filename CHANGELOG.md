@@ -6,13 +6,36 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-11-18
+## [1.0.0] - 2026-11-20
 
-First release of the rebuilt extension. Nothing is shared with the earlier
-single-file version; settings and history start fresh.
+First release of the rebuilt extension, the browser companion to the
+[Pawchive Downloader](https://github.com/VoxDroid/PawchiveDownloader) desktop
+app. Nothing is shared with the earlier single-file version; settings and
+history start fresh.
 
 ### Added
 
+- Pawchive, Kemono and Coomer, with their old `kemono.su`, `coomer.su` and
+  `.party` links. Services carry their site as in the desktop app
+  (`patreon@kemono`), and a `{site}` name token puts each site in its own
+  folder (the default folder template).
+- Hand downloads to the desktop app: pair with the six-digit code it shows,
+  then downloads, the watchlist and the app's queue (pause, resume, retry) go
+  through it while it runs; with the app closed the extension downloads
+  itself.
+- `links.txt` with a post's outside links (Mega, Google Drive, Dropbox and
+  more) and archive passwords, a Links tab listing them, `comments.txt` with
+  replies, and the creator's announcements once per download.
+- A check of Kemono and Coomer media servers before a download, with the
+  choice to cancel, save thumbnails instead, or queue the full files; files
+  that keep failing on the server's side are saved as thumbnails.
+- Failed files go back in the queue by themselves after a chosen time, up to
+  three times.
+- Favorites with notes, import and export in the desktop app's format; read
+  markers (Seen badges) on posts opened before; linked accounts on creator
+  panels; one-file backup and restore of settings, watchlist, favorites,
+  history and read markers.
+- Blur previews and private notifications.
 - Download panel on every Pawchive post, creator and list page, opened from a
   floating button, the toolbar popup, the context menu or `Alt+Shift+D`.
 - File picking with thumbnails, category filters, select all, invert and

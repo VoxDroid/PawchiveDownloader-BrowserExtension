@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "从 Pawchive 下载帖子、附件和创作者的全部帖子，支持 ZIP 压缩包、文件名模板、历史记录和关注列表。",
+    "message": "从 Pawchive、Kemono 和 Coomer 下载帖子、附件和整个创作者，支持 ZIP、关注列表和桌面应用联动。",
     "description": "Store and browser description, at most 132 characters"
   },
   "cmdTogglePanel": {

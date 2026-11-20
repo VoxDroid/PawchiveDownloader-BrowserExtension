@@ -22,16 +22,15 @@ run picks it up.
 
 ## Variables
 
-| Variable            | Default                                             | What it changes                                                                                                |
-| ------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `CI_NODE_VERSION`   | `22`                                                | Node.js version for CI and releases                                                                            |
-| `CI_OSES`           | `["ubuntu-latest","windows-latest","macos-latest"]` | Unit test systems while public                                                                                 |
-| `CI_OSES_PRIVATE`   | `["ubuntu-latest"]`                                 | Unit test systems while private                                                                                |
-| `CI_BROWSERS`       | `["chrome","firefox","edge"]`                       | Which browser packages to build and lint                                                                       |
-| `CI_E2E`            | `true`                                              | Set to `false` to skip the Playwright end-to-end tests                                                         |
-| `CI_COVERAGE`       | `true`                                              | Set to `false` to skip uploading the coverage report                                                           |
-| `CODEQL_ENABLED`    | unset                                               | CodeQL runs automatically while public. Set to `true` to run it while private (needs GitHub Advanced Security) |
-| `PUBLISH_TO_STORES` | unset                                               | Set to `true` to submit tagged releases to the browser stores (see [RELEASING.md](RELEASING.md))               |
+| Variable          | Default                                             | What it changes                                                                                                |
+| ----------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `CI_NODE_VERSION` | `22`                                                | Node.js version for CI and releases                                                                            |
+| `CI_OSES`         | `["ubuntu-latest","windows-latest","macos-latest"]` | Unit test systems while public                                                                                 |
+| `CI_OSES_PRIVATE` | `["ubuntu-latest"]`                                 | Unit test systems while private                                                                                |
+| `CI_BROWSERS`     | `["chrome","firefox","edge"]`                       | Which browser packages to build and lint                                                                       |
+| `CI_E2E`          | `true`                                              | Set to `false` to skip the Playwright end-to-end tests                                                         |
+| `CI_COVERAGE`     | `true`                                              | Set to `false` to skip uploading the coverage report                                                           |
+| `CODEQL_ENABLED`  | unset                                               | CodeQL runs automatically while public. Set to `true` to run it while private (needs GitHub Advanced Security) |
 
 Lists are JSON arrays, written exactly as in the defaults, for example
 `["ubuntu-latest","windows-latest"]`.
@@ -45,8 +44,9 @@ Lists are JSON arrays, written exactly as in the defaults, for example
 
 ## Other workflows
 
-- **Release** (`release.yml`) always runs the full checks on Ubuntu and builds
-  every browser package for a tag. See [RELEASING.md](RELEASING.md).
+- Official packages are built from version tags in the private
+  PawchiveDownloader-BrowserExtension-Releases repository, not here. See
+  [RELEASING.md](RELEASING.md).
 - **CodeQL** (`codeql.yml`) scans weekly and on every push while public.
 - **Dependabot** (`.github/dependabot.yml`) opens weekly update pull requests
   for npm packages and GitHub Actions.

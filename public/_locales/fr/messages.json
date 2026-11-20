@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Téléchargez publications, pièces jointes et créateurs entiers depuis Pawchive : ZIP, modèles de noms, historique, suivi.",
+    "message": "Téléchargez publications, pièces jointes et créateurs de Pawchive, Kemono et Coomer : ZIP, suivi et application de bureau.",
     "description": "Store and browser description, at most 132 characters"
   },
   "cmdTogglePanel": {

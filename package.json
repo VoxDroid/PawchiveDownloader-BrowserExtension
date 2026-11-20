@@ -1,6 +1,6 @@
 {
   "name": "pawchive-downloader",
-  "description": "Download posts, attachments and whole creators from Pawchive, right in your browser.",
+  "description": "Download posts, attachments and whole creators from Pawchive, Kemono and Coomer, right in your browser.",
   "version": "1.0.0",
   "private": true,
   "type": "module",

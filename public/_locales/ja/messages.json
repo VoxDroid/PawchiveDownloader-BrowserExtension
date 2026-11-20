@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Pawchive の投稿、添付ファイル、クリエイターの全投稿をダウンロード。ZIP 書庫、ファイル名テンプレート、履歴、ウォッチリストに対応。",
+    "message": "Pawchive・Kemono・Coomer から投稿、添付ファイル、クリエイター全体をダウンロード。ZIP、ウォッチリスト、デスクトップアプリ連携。",
     "description": "Store and browser description, at most 132 characters"
   },
   "cmdTogglePanel": {

@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Download posts, attachments and whole creators from Pawchive, with ZIP archives, name templates, history and a watchlist.",
+    "message": "Download posts, attachments and whole creators from Pawchive, Kemono and Coomer, with ZIP archives, a watchlist and the desktop app.",
     "description": "Store and browser description, at most 132 characters"
   },
   "cmdTogglePanel": {
