@@ -1,5 +1,6 @@
-import { htmlToText } from '../pawchive/normalize';
-import type { Post, PostFile } from '../pawchive/types';
+import { linksText } from '../pawchive/links';
+import { htmlToText } from '../pawchive/text';
+import type { Announcement, Comment, Post, PostFile } from '../pawchive/types';
 import { DEFAULT_SETTINGS, type Settings } from '../settings';
 import {
   buildArchivePath,
@@ -30,6 +31,11 @@ export function optionsFromSettings(
     categories,
     saveContent: settings.saveContent,
     saveMetadata: settings.saveMetadata,
+    saveLinks: settings.saveLinks,
+    saveComments: settings.saveComments,
+    saveAnnouncements: settings.saveAnnouncements,
+    thumbnailFallback: settings.thumbnailFallback,
+    thumbnailsOnly: false,
     previewOnly: settings.previewOnly,
     skipDownloaded: settings.skipDownloaded,
     folderTemplate: settings.folderTemplate,
@@ -140,7 +146,13 @@ function planFile(
   let relay = false;
   let skip: PlannedFile['skip'];
 
-  if (file.previewOnly) {
+  if (options.thumbnailsOnly) {
+    // The media server is down: thumbnails, where there are any.
+    if (file.thumbnailUrl) {
+      url = file.thumbnailUrl;
+      file = previewName(file);
+    } else skip = 'preview-only';
+  } else if (file.previewOnly) {
     if (options.previewOnly === 'relay') relay = true;
     else if (options.previewOnly === 'thumbnail' && file.thumbnailUrl) {
       url = file.thumbnailUrl;
@@ -199,6 +211,11 @@ export function planPost(
   }
   if (options.saveMetadata)
     texts.push({ name: 'post.json', text: metadataJson(post, creator), mime: 'application/json' });
+  const links =
+    options.saveLinks && !alreadySaved
+      ? linksText(post.title || post.id, post.url, post.links ?? [], post.passwords ?? [])
+      : null;
+  if (links) texts.push({ name: 'links.txt', text: links, mime: 'text/plain' });
 
   const fileItem = (p: PlannedFile): FileItem => ({
     ...baseItem(post),
@@ -209,8 +226,28 @@ export function planPost(
     source: { url: p.url, relay: p.relay, path: p.file.path, name: p.file.name },
     hash: p.file.hash,
     category: p.file.category,
+    // A file that is already its preview has nothing to fall back to.
+    thumbnail: p.url === p.file.thumbnailUrl ? null : (p.file.thumbnailUrl ?? null),
     ...(p.skip ? { status: 'skipped' as const, skipReason: p.skip } : {}),
   });
+
+  // Comments are fetched when the item runs, so they stay a file of their own.
+  const comments: TextItem[] =
+    options.saveComments && !alreadySaved
+      ? [
+          {
+            ...baseItem(post),
+            id: `${post.id}:comments.txt`,
+            kind: 'text',
+            label: 'comments.txt',
+            path: inFolder('comments.txt'),
+            text: '',
+            mime: 'text/plain',
+            fetch: 'comments',
+            meta: { title: post.title || post.id, url: post.url, name: creator?.name ?? '' },
+          },
+        ]
+      : [];
 
   if (options.mode === 'individual') {
     const items: Item[] = planned.map(fileItem);
@@ -225,7 +262,7 @@ export function planPost(
         mime: t.mime,
       } satisfies TextItem);
     }
-    return items;
+    return [...items, ...comments];
   }
 
   // ZIP mode: one archive per post. Skipped files are still listed so the
@@ -274,7 +311,93 @@ export function planPost(
       } satisfies TextItem);
     }
   }
-  return items;
+  return [...items, ...comments];
+}
+
+const PER_POST_TOKENS =
+  /\{(post_id|title|published|added|index|count|name|filename|ext|hash|role)(:[^{}]*)?\}/i;
+
+/** Whether a folder template segment differs from post to post. */
+export function perPostSegment(segment: string): boolean {
+  return PER_POST_TOKENS.test(segment);
+}
+
+/** The creator's own folder: the folder template up to the first per-post part. */
+export function creatorFolder(options: JobOptions, creator: CreatorInfo, now: Date): string {
+  const shared: string[] = [];
+  for (const segment of options.folderTemplate.split('/')) {
+    if (perPostSegment(segment)) break;
+    shared.push(segment);
+  }
+  return buildFolderPath(shared.join('/'), {
+    service: creator.service,
+    creatorId: creator.id,
+    creatorName: creator.name,
+    postId: '',
+    postTitle: '',
+    published: null,
+    added: null,
+    index: 0,
+    count: 0,
+    fileName: '',
+    ext: '',
+    hash: null,
+    role: '',
+    now,
+  });
+}
+
+/** The item that saves a creator's announcements, once per job. */
+export function announcementsItem(options: JobOptions, creator: CreatorInfo, now: Date): TextItem {
+  const folder = creatorFolder(options, creator, now);
+  return {
+    id: 'creator:announcements',
+    post: { service: creator.service, creatorId: creator.id, postId: '' },
+    status: 'pending',
+    attempts: 0,
+    bytes: 0,
+    totalBytes: 0,
+    kind: 'text',
+    label: 'announcements.txt',
+    path: folder ? `${folder}/announcements.txt` : 'announcements.txt',
+    text: '',
+    mime: 'text/plain',
+    fetch: 'announcements',
+    meta: { title: '', url: '', name: creator.name },
+  };
+}
+
+/** The text of a comments file, replies indented under their parent. */
+export function commentsText(title: string, url: string, comments: readonly Comment[]): string {
+  const ids = new Set(comments.map((c) => c.id));
+  const children = new Map<string, Comment[]>();
+  const roots: Comment[] = [];
+  for (const c of comments) {
+    if (c.parentId && ids.has(c.parentId) && c.parentId !== c.id) {
+      const list = children.get(c.parentId) ?? [];
+      list.push(c);
+      children.set(c.parentId, list);
+    } else roots.push(c);
+  }
+  let out = `Comments on ${title}\n${url}\n`;
+  const write = (c: Comment, depth: number): void => {
+    if (depth > 20) return;
+    const pad = '    '.repeat(depth);
+    out += `\n${pad}${c.author}  ${(c.published ?? '').replace('T', ' ')}\n`;
+    for (const line of htmlToText(c.content).split('\n')) out += `${pad}${line}\n`;
+    for (const child of children.get(c.id) ?? []) write(child, depth + 1);
+  };
+  for (const c of roots) write(c, 0);
+  return out;
+}
+
+/** The text of an announcements file, newest first. */
+export function announcementsText(name: string, list: readonly Announcement[]): string {
+  let out = `Announcements by ${name}\n`;
+  for (const a of list) {
+    out += `\n${(a.published ?? '').replace('T', ' ')}\n${htmlToText(a.content).trim()}\n\n----\n`;
+  }
+  return out;
 }
 
 export function computeStats(items: readonly Item[]): JobStats {

@@ -51,6 +51,7 @@
         alt=""
         loading="lazy"
         decoding="async"
+        class="blurrable"
         class:loaded
         onload={() => (loaded = true)}
         onerror={() => (failed = true)}

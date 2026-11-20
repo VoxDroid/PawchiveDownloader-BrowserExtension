@@ -7,9 +7,18 @@ import type { FileRecord, HistoryEntry, PostRecord } from '../storage/db';
 import { postKey } from '../storage/db';
 import type { Settings } from '../settings';
 import type { ZipResult, ZipSpec } from '../zip/builder';
-import { computeStats, hashesOf, optionsFromSettings, planPost } from './plan';
+import {
+  announcementsItem,
+  announcementsText,
+  commentsText,
+  computeStats,
+  hashesOf,
+  optionsFromSettings,
+  planPost,
+} from './plan';
 import type {
   CreatorInfo,
+  TextItem,
   FileItem,
   Item,
   Job,
@@ -19,6 +28,12 @@ import type {
   PostRef,
   ZipItem,
 } from './types';
+import { siteOfService, siteOrigin } from '../pawchive/sites';
+
+/** The site an item belongs to, as a URL the limiter can key on. */
+function siteUrlOf(item: { post: { service: string } }): string {
+  return `${siteOrigin(siteOfService(item.post.service))}/`;
+}
 
 export type DownloadState = 'in_progress' | 'interrupted' | 'complete';
 
@@ -117,6 +132,7 @@ export class DownloadEngine {
   private readonly resolving = new Map<string, AbortController>();
   private wakeTimer: unknown = null;
   private saveTimer: unknown = null;
+  private saveDue = 0;
   private readonly now: () => number;
   private readonly setTimer: (fn: () => void, ms: number) => unknown;
   private readonly clearTimer: (handle: unknown) => void;
@@ -229,9 +245,16 @@ export class DownloadEngine {
     this.persist();
   }
 
-  private persist(immediate = false): void {
+  /**
+   * Saves the queue: within a second normally, or within 200 ms when it
+   * matters (a browser download just started and its id must survive the
+   * worker stopping). Saves are coalesced either way: a creator with
+   * thousands of files would otherwise write the whole queue for every file.
+   */
+  private persist(soon = false): void {
+    const delay = soon ? 200 : 1000;
     if (this.saveTimer !== null) {
-      if (!immediate) return;
+      if (!soon || this.saveDue <= this.now() + delay) return;
       this.clearTimer(this.saveTimer);
     }
     const save = () => {
@@ -240,8 +263,8 @@ export class DownloadEngine {
         .save(this.jobs)
         .catch((error) => this.deps.log.warn('Could not save jobs', error));
     };
-    if (immediate) save();
-    else this.saveTimer = this.setTimer(save, 1000);
+    this.saveDue = this.now() + delay;
+    this.saveTimer = this.setTimer(save, delay);
   }
 
   // ------------------------------------------------------------ creating
@@ -318,6 +341,14 @@ export class DownloadEngine {
       job.refs.push({ service: post.service, creatorId: post.creatorId, postId: post.id });
     }
     job.postCount = posts.length;
+    if (
+      job.options.saveAnnouncements &&
+      job.creator &&
+      posts.length > 0 &&
+      !job.items.some((i) => i.id === 'creator:announcements')
+    ) {
+      job.items.push(announcementsItem(job.options, job.creator, now));
+    }
   }
 
   /** Looks up the posts a job asked for, then plans its items. */
@@ -485,7 +516,7 @@ export class DownloadEngine {
     const active: Active = { jobId: job.id, itemId: item.id, abort: new AbortController() };
     this.active.set(item.id + job.id, active);
     void (async () => {
-      active.release = await this.deps.limiter.acquire('https://pawchive.pw/', active.abort.signal);
+      active.release = await this.deps.limiter.acquire(siteUrlOf(item), active.abort.signal);
       const state = await this.waitFor(downloadId, item);
       this.finishDownload(item, state);
     })()
@@ -496,6 +527,15 @@ export class DownloadEngine {
   private async runSingle(job: Job, item: Exclude<Item, ZipItem>, active: Active): Promise<void> {
     const { downloads, limiter } = this.deps;
     if (item.kind === 'text') {
+      if (item.fetch) {
+        const text = await this.fetchText(item, active.abort.signal);
+        if (text === null) {
+          item.status = 'skipped';
+          item.skipReason = 'empty';
+          return;
+        }
+        item.text = text;
+      }
       const object = await this.deps.textUrl(item.text, item.mime);
       try {
         const id = await downloads.start({
@@ -532,6 +572,86 @@ export class DownloadEngine {
     this.finishDownload(item, await this.waitFor(id, item));
   }
 
+  /** The text of a comments or announcements item, or null when there is none. */
+  private async fetchText(item: TextItem, signal: AbortSignal): Promise<string | null> {
+    const { client } = this.deps;
+    const meta = item.meta ?? { title: item.post.postId, url: '', name: item.post.creatorId };
+    if (item.fetch === 'comments') {
+      const list = await client.getComments(
+        item.post.service,
+        item.post.creatorId,
+        item.post.postId,
+        signal,
+      );
+      return list.length > 0 ? commentsText(meta.title, meta.url, list) : null;
+    }
+    const list = await client.getAnnouncements(item.post.service, item.post.creatorId, signal);
+    return list.length > 0 ? announcementsText(meta.name, list) : null;
+  }
+
+  /**
+   * Puts failed files back in the queue once they have waited `afterMs`; each
+   * file gets `max` such second chances. Servers that were down are often back
+   * by then. Returns how many items were queued again.
+   */
+  autoRetry(afterMs: number, max: number): number {
+    const now = this.now();
+    let count = 0;
+    for (const job of this.jobs) {
+      if (job.status === 'paused' || job.status === 'cancelled' || job.status === 'resolving')
+        continue;
+      let any = false;
+      for (const item of job.items) {
+        if (item.status !== 'failed' || item.failedAt === undefined) continue;
+        if ((item.autoRetries ?? 0) >= max || now - item.failedAt < afterMs) continue;
+        item.status = 'pending';
+        item.attempts = 0;
+        item.error = undefined;
+        item.notBefore = undefined;
+        item.failedAt = undefined;
+        item.autoRetries = (item.autoRetries ?? 0) + 1;
+        any = true;
+        count += 1;
+      }
+      if (any && FINISHED.has(job.status)) {
+        job.status = 'queued';
+        job.finishedAt = undefined;
+        job.error = undefined;
+      }
+    }
+    if (count > 0) {
+      this.deps.log.info(`Trying ${count} failed files again automatically`);
+      this.persist();
+      this.changed();
+      this.pump();
+    }
+    return count;
+  }
+
+  /**
+   * Switches a file to its thumbnail when the full file cannot be had (its
+   * media server is down or the file is gone), as the desktop app does.
+   */
+  private fallBackToThumbnail(job: Job, item: Item, reason: string): boolean {
+    if (item.kind !== 'file' || item.fallback || !item.thumbnail) return false;
+    if (!job.options.thumbnailFallback) return false;
+    item.fallback = true;
+    item.source = { url: item.thumbnail, relay: false, path: item.source.path, name: item.label };
+    item.hash = null;
+    item.attempts = 0;
+    item.status = 'pending';
+    item.notBefore = undefined;
+    item.error = undefined;
+    const dot = item.path.lastIndexOf('.');
+    const slash = item.path.lastIndexOf('/');
+    const ext = item.thumbnail.match(/\.([a-z0-9]{2,5})(?:$|\?)/i)?.[1]?.toLowerCase() ?? 'jpg';
+    const stem = dot > slash ? item.path.slice(0, dot) : item.path;
+    item.path = `${stem}_preview.${ext}`;
+    item.label = item.path.slice(item.path.lastIndexOf('/') + 1);
+    this.deps.log.warn(`Saving the thumbnail of ${item.label} instead`, reason);
+    return true;
+  }
+
   private finishDownload(item: Item, state: DownloadSnapshot): void {
     if (state.state === 'complete') {
       item.bytes = item.totalBytes = Math.max(state.totalBytes, state.bytesReceived, item.bytes);
@@ -545,7 +665,7 @@ export class DownloadEngine {
   private async runZip(job: Job, item: ZipItem, active: Active): Promise<void> {
     const { limiter, downloads, log } = this.deps;
     const signal = active.abort.signal;
-    active.release = await limiter.acquire('https://pawchive.pw/', signal);
+    active.release = await limiter.acquire(siteUrlOf(item), signal);
 
     const entries: ZipSpec['entries'] = [];
     for (const entry of item.entries) {
@@ -689,17 +809,20 @@ export class DownloadEngine {
         /invalid filename/i.test(message) ||
         item.attempts > this.deps.settings().maxRetries
       ) {
-        item.status = 'failed';
-        item.error = message;
-        log.warn(`Failed: ${item.label}`, message);
+        // A file the server does not have, or one that kept failing: its
+        // thumbnail is better than nothing. Disk errors are not the server's.
+        const serverSide = !code.startsWith('FILE_') && !/invalid filename/i.test(message);
+        if (!(serverSide && this.fallBackToThumbnail(job, item, message))) {
+          item.status = 'failed';
+          item.error = message;
+          item.failedAt = this.now();
+          log.warn(`Failed: ${item.label}`, message);
+        }
       } else {
         // Network and server errors may be the site throttling us: slow
         // everyone down, and fetch relay links afresh in case they expired.
         if (code.startsWith('SERVER') || code.startsWith('NETWORK') || code === 'FAILED') {
-          const url =
-            item.kind === 'file'
-              ? (item.source.url ?? 'https://pawchive.pw/')
-              : 'https://pawchive.pw/';
+          const url = item.kind === 'file' ? (item.source.url ?? siteUrlOf(item)) : siteUrlOf(item);
           this.deps.limiter.penalize(url, item.attempts - 1);
         }
         if (item.kind === 'file' && item.source.relay) this.relays.delete(postKey(item.post));

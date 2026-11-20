@@ -5,6 +5,7 @@
   import { call } from '../../lib/messages';
   import type { PageRef } from '../../lib/pawchive/types';
   import { parsePageUrl, SITE_ORIGIN } from '../../lib/pawchive/urls';
+  import { isSitePageHost } from '../../lib/pawchive/sites';
   import { watchKey } from '../../lib/watch';
   import { LINKS } from '../../lib/links';
   import { app, overallProgress, t, themeDocument, fmt } from '../../ui/state/app.svelte';
@@ -14,6 +15,7 @@
   import Icon from '../../ui/components/Icon.svelte';
   import IconButton from '../../ui/components/IconButton.svelte';
   import JobCard from '../../ui/components/JobCard.svelte';
+  import AppJobs from './AppJobs.svelte';
   import Logo from '../../ui/components/Logo.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
 
@@ -46,7 +48,11 @@
     const [active] = await browser.tabs.query({ active: true, currentWindow: true });
     tab = { id: active?.id, url: active?.url ?? '', title: active?.title ?? '' };
     ref = parsePageUrl(tab.url);
-    onSite = tab.url.startsWith(SITE_ORIGIN);
+    try {
+      onSite = isSitePageHost(new URL(tab.url).hostname);
+    } catch {
+      onSite = false;
+    }
     if (ref.kind === 'creator' || ref.kind === 'post') {
       const key = watchKey(ref.service, ref.creatorId);
       watching = (await call('watch:list').catch(() => [])).some((e) => e.key === key);
@@ -219,6 +225,8 @@
       <Icon name="chevronRight" class="chev" />
     </button>
   {/if}
+
+  <AppJobs />
 
   <section class="jobs">
     <div class="jobs-head">

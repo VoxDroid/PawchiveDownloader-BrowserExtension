@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  Download posts, attachments and whole creators from <a href="https://pawchive.pw">Pawchive</a>, right in your browser.
+  Download posts, attachments and whole creators from <a href="https://pawchive.pw">Pawchive</a>, <a href="https://kemono.cr">Kemono</a> and <a href="https://coomer.st">Coomer</a>, right in your browser.
 </p>
 
 <p align="center">
@@ -27,7 +27,9 @@
 
 ---
 
-Pawchive Downloader adds a download panel to every post and creator page on Pawchive. Pick the files you want, save them as separate files or a ZIP archive, queue whole creators, and let a watchlist find new posts for you. It is the browser companion to [KemonoDownloader](https://github.com/VoxDroid/KemonoDownloader), rebuilt from scratch for Pawchive only.
+Pawchive Downloader adds a download panel to every post and creator page on Pawchive, Kemono and Coomer. Pick the files you want, save them as separate files or a ZIP archive, queue whole creators, and let a watchlist find new posts for you. It is the browser companion to the [Pawchive Downloader desktop app](https://github.com/VoxDroid/PawchiveDownloader): pair the two and the panel hands downloads to the app, which keeps going when the browser closes and also downloads the Mega, Google Drive and Dropbox links posts share.
+
+**Free to build, official builds on Ko-fi.** The source code is MIT licensed and anyone can [build it](#from-source). Ready-made packages for Chrome, Edge and Firefox (signed, so it stays installed) are offered on [Ko-fi](https://ko-fi.com/izeno).
 
 ## Contents
 
@@ -51,25 +53,33 @@ Pawchive Downloader adds a download panel to every post and creator page on Pawc
 
 | Feature                    | What it does                                                                                                                                                    |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Download panel             | A floating paw button on every Pawchive page opens a side panel for the post, creator or list you are viewing.                                                  |
+| Three sites                | Pawchive, Kemono and Coomer, with their old kemono.su, coomer.su and .party links. Each site gets its own folder.                                               |
+| Download panel             | A floating paw button on every page opens a side panel for the post, creator or list you are viewing.                                                           |
 | File picking               | Thumbnails of every file with category filters (images, videos, audio, archives, documents, text), select all, invert, and Shift-click ranges.                  |
 | Whole creators             | Load a creator's full post list, filter by title, date range and whether posts have files, and download any selection, or everything at once.                   |
 | Selection on lists         | Tick posts directly on the site's own post cards on creator pages and search results, with Shift-click ranges.                                                  |
 | ZIP archives               | Each post becomes one archive, streamed in the browser and split into numbered parts below the ZIP size limit. Videos and very large files are saved beside it. |
 | Preview-only files         | When Pawchive only keeps a preview, the full file is fetched through the temporary link the post page offers.                                                   |
 | Post text and metadata     | Save the description as `content.txt` and/or `content.html`, plus a `post.json` with title, dates, tags and files.                                              |
+| Outside links              | Mega, Google Drive, Dropbox and other links a post shares, and its archive passwords, in a Links tab and in `links.txt`. The paired desktop app downloads them. |
+| Comments and announcements | `comments.txt` with replies under their parent, and the creator's announcements once per download.                                                              |
+| Dead media servers         | Before a Kemono or Coomer download, the media server is checked; when it is down you choose: cancel, thumbnails instead, or queue the full files.               |
 | Skip what you have         | Files are recognised by their content hash across posts and creators, so nothing downloads twice. Posts you saved get a badge on the site.                      |
 | Context menu and shortcuts | Right-click any post or creator link to download or watch it. `Alt+Shift+D` toggles the panel, `Alt+Shift+A` downloads the open post.                           |
 
 **Managing**
 
-| Feature        | What it does                                                                                                                                               |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Download queue | Pause, resume, cancel and retry each job or everything at once. Live speed, progress, time left and per-file status. Jobs survive browser restarts.        |
-| Retries        | Network and server errors retry with growing, jittered pauses; disk and permission errors stop at once with a clear reason.                                |
-| History        | Every finished download with files, size, duration and errors. Search, filter, show in folder, download again, export as CSV or JSON.                      |
-| Watchlist      | Follow creators. New posts are found on a schedule (hourly to daily), shown with a badge and a notification, and downloaded in one click or automatically. |
-| Logs           | A searchable, filterable log of what the extension did and why, with copy and save.                                                                        |
+| Feature        | What it does                                                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Download queue | Pause, resume, cancel and retry each job or everything at once. Live speed, progress, time left and per-file status. Jobs survive browser restarts.                       |
+| Retries        | Network and server errors retry with growing, jittered pauses; disk and permission errors stop at once. Failed files are tried again later by themselves.                 |
+| Desktop app    | Pair with Pawchive Downloader on this computer: downloads, the watchlist and the app's queue go through it while it runs, and the extension takes over when it is closed. |
+| Favorites      | Star posts and creators, keep notes, download again in one click, and move the list to the desktop app and back.                                                          |
+| Read markers   | Posts you opened before get a Seen badge on the site's lists.                                                                                                             |
+| Backup         | One file with settings, watchlist, favorites, history and read markers, restored on another browser.                                                                      |
+| History        | Every finished download with files, size, duration and errors. Search, filter, show in folder, download again, export as CSV or JSON.                                     |
+| Watchlist      | Follow creators. New posts are found on a schedule (hourly to daily), shown with a badge and a notification, and downloaded in one click or automatically.                |
+| Logs           | A searchable, filterable log of what the extension did and why, with copy and save.                                                                                       |
 
 **Interface**
 
@@ -105,11 +115,11 @@ Requires Chrome 116 or newer.
 
 ### Firefox
 
-1. Download `pawchive-downloader-<version>-firefox.zip`.
-2. Open `about:debugging#/runtime/this-firefox` and click **Load Temporary Add-on**.
-3. Pick the downloaded zip (or `manifest.json` inside the unzipped folder).
+The official build includes a Firefox package signed by Mozilla (`.xpi`): open it in Firefox (or drag it onto a Firefox window) and confirm. It stays installed and updates by installing the next one over it.
 
-Temporary add-ons are removed when Firefox restarts. Requires Firefox 140 or newer (142 on Android). If Firefox asks, allow access to `pawchive.pw`; Settings shows a banner when access is missing.
+A build made from source is unsigned: open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on** and pick its zip. Temporary add-ons are removed when Firefox restarts.
+
+Requires Firefox 140 or newer (142 on Android). If Firefox asks, allow access to the three sites; Settings shows a banner when access is missing.
 
 ### From source
 
@@ -129,13 +139,15 @@ The unpacked extensions are written to `.output/chrome-mv3` and `.output/firefox
 
 ## Using it
 
-1. Open a post or a creator on [pawchive.pw](https://pawchive.pw).
+1. Open a post or a creator on [pawchive.pw](https://pawchive.pw), [kemono.cr](https://kemono.cr) or [coomer.st](https://coomer.st).
 2. Click the paw button in the corner, press `Alt+Shift+D`, or open the toolbar popup.
 3. On a post, pick files; on a creator, load the post list and pick posts; on any list, switch on **Select posts on the page** and tick cards.
 4. Choose **Separate files** or **ZIP archive** and press **Download**.
 5. Follow progress in the panel, the popup or the dashboard. Downloads keep going in the background.
 
-Files are saved in your browser's downloads folder, organised by the folder template (by default `Pawchive/<creator> (<service>)/<date> <title> [<post id>]/`).
+Files are saved in your browser's downloads folder, organised by the folder template (by default `<site>/<creator> (<service>)/<date> <title> [<post id>]/`, so `Kemono/...` for Kemono posts).
+
+To hand downloads to the desktop app, open **Settings > Desktop app**, then in the app open Settings > Browser extension, turn it on and press **Pair**. Enter the six-digit code in the extension and switch on **Send downloads to the app**.
 
 ## File names and folders
 
@@ -143,7 +155,8 @@ Three templates decide where things go. They are edited in **Settings > File nam
 
 | Token                              | Meaning                                                                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `{service}`                        | Site the post came from (`patreon`, `fanbox`)                                                                 |
+| `{site}`                           | Site the post is on (`Pawchive`, `Kemono`, `Coomer`)                                                          |
+| `{service}`                        | Service the post came from (`patreon`, `fanbox`)                                                              |
 | `{creator}`, `{creator_id}`        | Creator name and ID                                                                                           |
 | `{post_id}`, `{title}`             | Post ID and title                                                                                             |
 | `{published}`, `{added}`, `{date}` | Publish date, archive date, download date; take a format such as `{published:YYYY-MM-DD}` or `{date:YYYY/MM}` |
@@ -154,11 +167,11 @@ Three templates decide where things go. They are edited in **Settings > File nam
 
 Defaults:
 
-| Template  | Default                                                                     |
-| --------- | --------------------------------------------------------------------------- |
-| Folder    | `Pawchive/{creator} ({service})/{published:YYYY-MM-DD} {title} [{post_id}]` |
-| File name | `{index:2}_{filename}`                                                      |
-| ZIP name  | `{creator} - {published:YYYY-MM-DD} {title} [{post_id}]`                    |
+| Template  | Default                                                                   |
+| --------- | ------------------------------------------------------------------------- |
+| Folder    | `{site}/{creator} ({service})/{published:YYYY-MM-DD} {title} [{post_id}]` |
+| File name | `{index:2}_{filename}`                                                    |
+| ZIP name  | `{creator} - {published:YYYY-MM-DD} {title} [{post_id}]`                  |
 
 Every value is cleaned so names are valid on Windows, macOS and Linux: reserved names and characters, invisible direction marks and shortcut extensions are neutralised, `..` can never leave the downloads folder, and long paths are shortened while keeping the extension.
 
@@ -167,6 +180,7 @@ Every value is cleaned so names are valid on Windows, macOS and Linux: reserved 
 | Area         | Settings                                                                                                                                                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Appearance   | Language, theme, accent color, animations                                                                                                                                                                                                  |
+| Desktop app  | Pairing with Pawchive Downloader, sending downloads to it                                                                                                                                                                                  |
 | Downloads    | Default format, simultaneous downloads (1 to 5), time between requests, retries, what to do when a file exists, skip downloaded files, preview-only files (temporary link, preview image or skip), post text, metadata, default file types |
 | File names   | Folder, file and ZIP templates with presets and a token reference                                                                                                                                                                          |
 | ZIP archives | Largest archive (split above it), save videos beside the archive, save files above a size separately                                                                                                                                       |
@@ -176,9 +190,9 @@ Every value is cleaned so names are valid on Windows, macOS and Linux: reserved 
 
 ## Privacy and politeness
 
-- **No data collection.** No accounts, tracking or analytics. Settings sync through your browser's own sync; history, watchlist and logs stay on your device. The extension talks only to `pawchive.pw` and its file servers. See [PRIVACY.md](PRIVACY.md).
+- **No data collection.** No accounts, tracking or analytics. Settings sync through your browser's own sync; history, watchlist, favorites and logs stay on your device. The extension talks only to Pawchive, Kemono and Coomer and their file servers, and, once paired, to the desktop app on `127.0.0.1`. See [PRIVACY.md](PRIVACY.md).
 - **Polite by design.** Pawchive asks for at most five downloads at once and one new request per second. The extension enforces both across every download, ZIP archive and API call. When the site answers `429 Too Many Requests` (or `503` with `Retry-After`), every request waits for the cooldown, then resumes staggered so they do not stampede. The rules are the same as in KemonoDownloader.
-- **Minimal permissions.** `downloads`, `storage`, `unlimitedStorage` (history and large queues), `contextMenus`, `notifications`, `alarms` (watchlist schedule), `offscreen` (Chrome only, to build ZIP archives) and access to `pawchive.pw`.
+- **Minimal permissions.** `downloads`, `storage`, `unlimitedStorage` (history and large queues), `contextMenus`, `notifications`, `alarms` (watchlist schedule and retries), `offscreen` (Chrome only, to build ZIP archives), access to the three sites, and `127.0.0.1` only when you pair the desktop app.
 
 ## Development
 
@@ -200,7 +214,7 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Translations 
 
 ### Quality gates
 
-CI runs on every push and pull request: ESLint, Prettier, `svelte-check`, the translation checker, unit tests with coverage on Linux, Windows and macOS, builds for Chrome, Edge and Firefox with Mozilla's add-on linter, and the Playwright suite. CodeQL scans the code and Dependabot keeps dependencies current. Tagged releases build every package and publish a GitHub release, and can submit to the stores. The workflows adapt to whether the repository is private or public and can be tuned with repository variables; see [docs/CI.md](docs/CI.md).
+CI runs on every push and pull request: ESLint, Prettier, `svelte-check`, the translation checker, unit tests with coverage on Linux, Windows and macOS, builds for Chrome, Edge and Firefox with Mozilla's add-on linter, and the Playwright suite. CodeQL scans the code and Dependabot keeps dependencies current. Official packages are built from version tags in a separate repository; see [docs/RELEASING.md](docs/RELEASING.md). The workflows adapt to whether the repository is private or public and can be tuned with repository variables; see [docs/CI.md](docs/CI.md).
 
 ## Project structure
 
@@ -231,7 +245,7 @@ A deeper tour is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Support the project
 
-Pawchive Downloader is free and open source, and it will stay that way. If it saves you time, you can [buy me a coffee on Ko-fi](https://ko-fi.com/izeno). Starring the repository, reporting bugs and improving translations help just as much.
+Pawchive Downloader is free and open source, and it will stay that way. The [official build on Ko-fi](https://ko-fi.com/izeno) is the easiest way to get it (with a signed Firefox package) and keeps the project going; Supporters get it free. Starring the repository, reporting bugs and improving translations help just as much.
 
 ## Disclaimer and ethical use
 
@@ -241,7 +255,7 @@ Creators rely on their supporters. Download only what you are entitled to, keep 
 
 ## Credits
 
-- Built by [VoxDroid](https://github.com/VoxDroid), companion to [KemonoDownloader](https://github.com/VoxDroid/KemonoDownloader).
+- Built by [VoxDroid](https://github.com/VoxDroid), companion to the [Pawchive Downloader desktop app](https://github.com/VoxDroid/PawchiveDownloader), the successor of [KemonoDownloader](https://github.com/VoxDroid/KemonoDownloader).
 - [JetBrains Mono Nerd Font](https://github.com/ryanoasis/nerd-fonts) under the SIL Open Font License 1.1 (see `public/fonts/OFL.txt`).
 - [WXT](https://wxt.dev), [Svelte](https://svelte.dev) and [fflate](https://github.com/101arrowz/fflate).
 

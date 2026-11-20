@@ -17,6 +17,10 @@
   import type { CardController } from '../cards';
   import { cardKey, siteClient } from '../page.svelte';
   import DownloadFooter, { type FooterChoice } from './DownloadFooter.svelte';
+  import FavoriteStar from './FavoriteStar.svelte';
+  import { bareService, siteName, siteOfService } from '../../../lib/pawchive/sites';
+  import { pageUrls } from '../../../lib/pawchive/urls';
+  import type { LinkedAccount } from '../../../lib/pawchive/types';
   import SelectionBar from './SelectionBar.svelte';
   import { choiceOptions, queueJob } from './jobs';
 
@@ -28,6 +32,7 @@
   let creator = $state<Creator | null>(null);
   let watching = $state(false);
   let watchBusy = $state(false);
+  let linked = $state<LinkedAccount[]>([]);
   let posts = $state<Post[] | null>(null);
   let scanning = $state(false);
   let scanned = $state({ pages: 0, posts: 0 });
@@ -68,6 +73,16 @@
   const activeFilters = $derived(
     [query, from, to].filter(Boolean).length + (hideDownloaded ? 1 : 0) + (onlyFiles ? 0 : 1),
   );
+
+  $effect(() => {
+    void siteClient
+      .getLinkedAccounts(ref.service, ref.creatorId)
+      .then(
+        (list) =>
+          (linked = list.filter((a) => a.id !== ref.creatorId || a.service !== ref.service)),
+      )
+      .catch(() => undefined);
+  });
 
   onMount(async () => {
     siteClient
@@ -140,6 +155,12 @@
     selected = next;
   }
 
+  /** A full file of these posts, to check the media server before downloading. */
+  function probeUrl(list: readonly Post[]): string | null {
+    for (const post of list) for (const file of post.files) if (file.url) return file.url;
+    return null;
+  }
+
   function creatorInfo() {
     return { service: ref.service, id: ref.creatorId, name: creator?.name ?? ref.creatorId };
   }
@@ -155,6 +176,7 @@
         options: choiceOptions(choice),
       },
       t('toast.queuedPosts', { count: selectedPosts.length }),
+      probeUrl(selectedPosts),
     );
     busy = false;
   }
@@ -169,6 +191,7 @@
         options: choiceOptions(choice),
       },
       t('toast.queuedCreator', { name: creator?.name ?? ref.creatorId }),
+      probeUrl(posts ?? []),
     );
     busy = false;
   }
@@ -188,6 +211,15 @@
         });
         watching = true;
         toast(t('watch.added', { name: creatorInfo().name }), 'success');
+        // With downloads going to the desktop app, it watches the creator too.
+        if (app.settings.sendToApp) {
+          const inApp = await call('bridge:watch', {
+            service: ref.service,
+            creatorId: ref.creatorId,
+            name: creatorInfo().name,
+          }).catch(() => null);
+          if (inApp?.ok) toast(t('bridge.watchedInApp'), 'success');
+        }
       }
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'error');
@@ -212,18 +244,26 @@
 <div class="view">
   <div class="profile">
     {#if creator}
-      <img class="banner" src={creator.bannerUrl} alt="" loading="lazy" in:fade />
+      <img class="banner blurrable" src={creator.bannerUrl} alt="" loading="lazy" in:fade />
     {/if}
     <div class="profile-row">
-      <img class="avatar" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
+      <img class="avatar blurrable" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
       <div class="who">
         <h2 class="truncate">{creator?.name ?? ref.creatorId}</h2>
         <span class="muted truncate"
-          >{ref.service}{#if creator?.updated}<span class="sep">/</span>{t('creator.updated', {
+          >{bareService(ref.service)}<span class="sep">/</span>{siteName(
+            siteOfService(ref.service),
+          )}{#if creator?.updated}<span class="sep">/</span>{t('creator.updated', {
               date: fmt.date(creator.updated),
             })}{/if}</span
         >
       </div>
+      <FavoriteStar
+        kind="creator"
+        service={ref.service}
+        creatorId={ref.creatorId}
+        title={creator?.name ?? ref.creatorId}
+      />
       <Button
         size="sm"
         variant={watching ? 'subtle' : 'secondary'}
@@ -234,6 +274,18 @@
         {watching ? t('creator.watching') : t('creator.watch')}
       </Button>
     </div>
+    {#if linked.length}
+      <div class="linked">
+        {#each linked as account (account.service + account.id)}
+          <a
+            class="linked-chip"
+            href={pageUrls.creator(account.service, account.id)}
+            title={account.name}
+            >{bareService(account.service)}<span class="muted">{account.name}</span></a
+          >
+        {/each}
+      </div>
+    {/if}
   </div>
 
   {#if app.settings.cardSelectors}
@@ -566,5 +618,26 @@
     background: var(--bg-hover);
     color: var(--text);
     text-decoration: none;
+  }
+  .linked {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 14px 0;
+  }
+  .linked-chip {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: var(--fs-sm);
+    color: var(--text);
+    text-decoration: none;
+    max-width: 100%;
+  }
+  .linked-chip:hover {
+    border-color: var(--accent);
   }
 </style>

@@ -6,9 +6,30 @@ import {
   systemClock,
   type Clock,
 } from '../net/limiter';
-import { normalizeCreator, normalizePost } from './normalize';
+import {
+  normalizeAnnouncement,
+  normalizeComment,
+  normalizeCreator,
+  normalizeCreatorEntry,
+  normalizeLinkedAccount,
+  normalizePost,
+} from './normalize';
 import { parseRelayLinks, type RelayIndex } from './relay';
-import type { Creator, Post, RawPost, RawProfile, Service } from './types';
+import { siteOfService, type Site } from './sites';
+import type {
+  Announcement,
+  Comment,
+  Creator,
+  CreatorEntry,
+  LinkedAccount,
+  Post,
+  RawAnnouncement,
+  RawComment,
+  RawCreatorEntry,
+  RawPost,
+  RawProfile,
+  Service,
+} from './types';
 import { apiUrls, PAGE_SIZE, pageUrls } from './urls';
 
 export class ApiError extends Error {
@@ -46,8 +67,10 @@ export interface CreatorScanProgress {
 }
 
 /**
- * Small client for Pawchive's JSON API. The site (like Kemono) serves JSON only
- * to requests that ask for `text/css`, which is what its own front end sends.
+ * Small client for the JSON API that Pawchive, Kemono and Coomer share. The
+ * sites serve JSON only to requests that ask for `text/css`, which is what
+ * their own front end sends. Services carry their site (`patreon@kemono`), and
+ * every request goes to that site.
  */
 export class PawchiveClient {
   readonly limiter: SiteLimiter;
@@ -85,13 +108,80 @@ export class PawchiveClient {
     if (!post || typeof post !== 'object' || !('id' in post)) {
       throw new ApiError('Unexpected post response', 200, apiUrls.post(service, creatorId, postId));
     }
-    return normalizePost(post);
+    return normalizePost(post, siteOfService(service));
   }
 
   async getCreator(service: Service, creatorId: string, signal?: AbortSignal): Promise<Creator> {
     return normalizeCreator(
       await this.json<RawProfile>(apiUrls.profile(service, creatorId), signal),
+      siteOfService(service),
     );
+  }
+
+  /** Comments under a post, oldest first as the site sends them. */
+  async getComments(
+    service: Service,
+    creatorId: string,
+    postId: string,
+    signal?: AbortSignal,
+  ): Promise<Comment[]> {
+    try {
+      const raw = await this.json<RawComment[]>(
+        apiUrls.comments(service, creatorId, postId),
+        signal,
+      );
+      return Array.isArray(raw) ? raw.map(normalizeComment) : [];
+    } catch (error) {
+      // Posts without comments answer 404 on some sites.
+      if (error instanceof ApiError && error.notFound) return [];
+      throw error;
+    }
+  }
+
+  async getAnnouncements(
+    service: Service,
+    creatorId: string,
+    signal?: AbortSignal,
+  ): Promise<Announcement[]> {
+    try {
+      const raw = await this.json<RawAnnouncement[]>(
+        apiUrls.announcements(service, creatorId),
+        signal,
+      );
+      return Array.isArray(raw) ? raw.map(normalizeAnnouncement) : [];
+    } catch (error) {
+      if (error instanceof ApiError && error.notFound) return [];
+      throw error;
+    }
+  }
+
+  /** The creator's accounts on other services, as the site links them. */
+  async getLinkedAccounts(
+    service: Service,
+    creatorId: string,
+    signal?: AbortSignal,
+  ): Promise<LinkedAccount[]> {
+    const site = siteOfService(service);
+    try {
+      const raw = await this.json<Array<{ id: string; service: string; name?: string }>>(
+        apiUrls.linked(service, creatorId),
+        signal,
+      );
+      return Array.isArray(raw) ? raw.map((r) => normalizeLinkedAccount(r, site)) : [];
+    } catch (error) {
+      if (error instanceof ApiError && error.notFound) return [];
+      throw error;
+    }
+  }
+
+  /** Every creator on a site (tens of thousands; cache it). */
+  async getCreatorList(site: Site, signal?: AbortSignal): Promise<CreatorEntry[]> {
+    const raw = await this.json<RawCreatorEntry[]>(apiUrls.creators(site), signal);
+    if (!Array.isArray(raw))
+      throw new ApiError('Unexpected creator list', 200, apiUrls.creators(site));
+    return raw
+      .filter((r) => r && r.id != null && typeof r.service === 'string')
+      .map((r) => normalizeCreatorEntry(r, site));
   }
 
   async getCreatorPage(
@@ -111,7 +201,8 @@ export class PawchiveClient {
         200,
         apiUrls.creatorPosts(service, creatorId, offset, query),
       );
-    return raw.map(normalizePost);
+    const site = siteOfService(service);
+    return raw.map((p) => normalizePost(p, site));
   }
 
   /** Every post of a creator, newest first, fetched page by page. */
@@ -157,9 +248,15 @@ export class PawchiveClient {
     offset = 0,
     query: string | null = null,
     signal?: AbortSignal,
+    site: Site = 'pawchive',
   ): Promise<Post[]> {
-    const raw = await this.json<RawPost[]>(apiUrls.recentPosts(offset, query), signal);
-    return Array.isArray(raw) ? raw.map(normalizePost) : [];
+    const raw = await this.json<RawPost[] | { posts?: RawPost[] }>(
+      apiUrls.recentPosts(offset, query, site),
+      signal,
+    );
+    // Kemono wraps listings in { posts } when searching; accept both.
+    const list = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
+    return list.map((p) => normalizePost(p, site));
   }
 
   /** Temporary relay links for the post's preview-only files. */

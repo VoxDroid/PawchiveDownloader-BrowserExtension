@@ -17,10 +17,20 @@ import {
 } from '../lib/messages';
 import { SiteLimiter } from '../lib/net/limiter';
 import { PawchiveClient } from '../lib/pawchive/client';
-import { parsePageUrl, SITE_ORIGIN } from '../lib/pawchive/urls';
-import { DEFAULT_SETTINGS, resolveLocale, type Locale, type Settings } from '../lib/settings';
+import { AppBridge, BridgeError, EMPTY_BRIDGE, type BridgeState } from '../lib/bridge';
+import { favoriteKey, parseFavorites, type Favorite } from '../lib/favorites';
+import { createBackup, parseBackup, planRestore } from '../lib/backup';
+import { SITE_PAGE_MATCHES, SITES, SITE_IDS } from '../lib/pawchive/sites';
+import { parsePageUrl } from '../lib/pawchive/urls';
+import {
+  AUTO_RETRY_LIMIT,
+  DEFAULT_SETTINGS,
+  resolveLocale,
+  type Locale,
+  type Settings,
+} from '../lib/settings';
 import * as db from '../lib/storage/db';
-import { loadSettings, watchSettings } from '../lib/storage/settings-store';
+import { loadSettings, saveSettings, watchSettings } from '../lib/storage/settings-store';
 import {
   applyCheck,
   createWatchEntry,
@@ -33,12 +43,27 @@ import { localZipPort, offscreenZipPort, textObjectUrl } from '../lib/zip/hosts'
 
 const IS_FIREFOX = import.meta.env.BROWSER === 'firefox';
 const WATCH_ALARM = 'watch-check';
-const POST_LINK = `${SITE_ORIGIN}/*/user/*/post/*`;
-const CREATOR_LINK = `${SITE_ORIGIN}/*/user/*`;
+const RETRY_ALARM = 'auto-retry';
+/** A media server that did not answer is skipped for this long. */
+const MEDIA_DOWN_MS = 10 * 60_000;
+const SITE_DOMAINS = SITE_IDS.flatMap((s) => SITES[s].domains);
+const POST_LINKS = SITE_DOMAINS.flatMap((d) => [
+  `https://${d}/*/user/*/post/*`,
+  `https://www.${d}/*/user/*/post/*`,
+]);
+const CREATOR_LINKS = SITE_DOMAINS.flatMap((d) => [
+  `https://${d}/*/user/*`,
+  `https://www.${d}/*/user/*`,
+]);
 
 const jobsItem = storage.defineItem<Job[]>('local:jobs', { fallback: [] });
 const watchItem = storage.defineItem<WatchEntry[]>('local:watchlist', { fallback: [] });
 const logsItem = storage.defineItem<LogEntry[]>('local:logs', { fallback: [] });
+const bridgeItem = storage.defineItem<BridgeState>('local:bridge', { fallback: EMPTY_BRIDGE });
+const favoritesItem = storage.defineItem<Favorite[]>('local:favorites', { fallback: [] });
+/** Posts opened before, newest first (read markers). */
+const readsItem = storage.defineItem<string[]>('local:reads', { fallback: [] });
+const MAX_READS = 20_000;
 
 export default defineBackground({
   type: 'module',
@@ -96,6 +121,25 @@ export default defineBackground({
     }
 
     // -------------------------------------------------------------- engine
+
+    // The desktop app, when it runs and was paired (see lib/bridge.ts).
+    const bridge = new AppBridge({
+      fetch: (input, init) => fetch(input, init),
+      load: async () => ({ ...EMPTY_BRIDGE, ...(await bridgeItem.getValue()) }),
+      save: (state) => bridgeItem.setValue(state),
+    });
+
+    /** Runs a bridge call, turning "app closed" and similar into a result. */
+    async function viaBridge<T extends object>(
+      run: () => Promise<T>,
+    ): Promise<({ ok: true } & T) | { ok: false; code: string }> {
+      try {
+        return { ok: true, ...(await run()) };
+      } catch (error) {
+        if (error instanceof BridgeError) return { ok: false, code: error.code };
+        return { ok: false, code: 'network' };
+      }
+    }
 
     const engine = new DownloadEngine({
       client,
@@ -200,10 +244,12 @@ export default defineBackground({
       const failed = job.status === 'failed' || stats.failed > 0;
       if (settings.notifications === 'errors' && !failed) return;
       if (job.status === 'cancelled') return;
+      // Private notifications never show post titles or creator names.
+      const name = settings.privateNotifications ? t('notify.aDownload') : job.title;
       const title =
         job.status === 'failed'
-          ? t('notify.jobFailed', { title: job.title })
-          : t('notify.jobDone', { title: job.title });
+          ? t('notify.jobFailed', { title: name })
+          : t('notify.jobDone', { title: name });
       const message =
         job.error === 'nothing-found'
           ? t('error.nothingFound')
@@ -278,7 +324,7 @@ export default defineBackground({
           void notify(
             `watch:${Date.now()}`,
             t('notify.newPosts', { count: found }),
-            fresh.slice(0, 5).join(', '),
+            settings.privateNotifications ? '' : fresh.slice(0, 5).join(', '),
           );
         }
         broadcast({ type: 'watch', newCount: totalNew(entries) });
@@ -327,9 +373,60 @@ export default defineBackground({
       });
     }
 
+    // Failed files go back in the queue by themselves after a while (the
+    // check runs every minute; the setting decides how long they wait).
+    void browser.alarms.create(RETRY_ALARM, { periodInMinutes: 1, delayInMinutes: 1 });
+
     browser.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === WATCH_ALARM) void checkWatchlist();
+      if (alarm.name === RETRY_ALARM && settings.autoRetryMinutes > 0) {
+        engine.autoRetry(settings.autoRetryMinutes * 60_000, AUTO_RETRY_LIMIT);
+      }
     });
+
+    /** How the app lists this pairing: browser and extension name. */
+    function extensionName(): string {
+      const browserName = IS_FIREFOX
+        ? 'Firefox'
+        : /Edg\//.test(navigator.userAgent)
+          ? 'Edge'
+          : 'Chrome';
+      return `${browserName}: ${browser.runtime.getManifest().name}`;
+    }
+
+    // ------------------------------------------------------- media servers
+
+    const mediaDown = new Map<string, number>();
+
+    /**
+     * Whether the media server behind a file URL answers, with one tiny
+     * request (the first byte), as the desktop app checks before a download.
+     */
+    async function checkMedia(url: string): Promise<{ reachable: boolean; host: string }> {
+      let host = '';
+      try {
+        host = new URL(url).hostname;
+      } catch {
+        return { reachable: true, host };
+      }
+      const until = mediaDown.get(host);
+      if (until !== undefined && until > Date.now()) return { reachable: false, host };
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10_000);
+      try {
+        await fetch(url, { headers: { Range: 'bytes=0-0' }, signal: controller.signal });
+        mediaDown.delete(host);
+        return { reachable: true, host };
+      } catch {
+        // No answer at all (timeout or refused): the server is down. Any
+        // answer, even an error status, means it is up.
+        mediaDown.set(host, Date.now() + MEDIA_DOWN_MS);
+        log.warn(`The media server ${host} does not answer`);
+        return { reachable: false, host };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
 
     // -------------------------------------------------------- context menu
 
@@ -341,25 +438,25 @@ export default defineBackground({
         id: 'download-post-link',
         title: t('menu.downloadPost'),
         contexts: ['link'],
-        targetUrlPatterns: [POST_LINK],
+        targetUrlPatterns: POST_LINKS,
       });
       create({
         id: 'download-creator-link',
         title: t('menu.downloadCreator'),
         contexts: ['link'],
-        targetUrlPatterns: [CREATOR_LINK],
+        targetUrlPatterns: CREATOR_LINKS,
       });
       create({
         id: 'watch-creator-link',
         title: t('menu.watchCreator'),
         contexts: ['link'],
-        targetUrlPatterns: [CREATOR_LINK],
+        targetUrlPatterns: CREATOR_LINKS,
       });
       create({
         id: 'open-panel',
         title: t('menu.openPanel'),
         contexts: ['page'],
-        documentUrlPatterns: [`${SITE_ORIGIN}/*`],
+        documentUrlPatterns: [...SITE_PAGE_MATCHES],
       });
     }
 
@@ -496,6 +593,126 @@ export default defineBackground({
         }
         return { added };
       },
+      'media:check': async ({ url }) => checkMedia(url),
+      'reads:mark': async ({ key }) => {
+        const reads = await readsItem.getValue();
+        if (reads[0] !== key) {
+          await readsItem.setValue([key, ...reads.filter((k) => k !== key)].slice(0, MAX_READS));
+        }
+        return null;
+      },
+      'favorites:list': async () => favoritesItem.getValue(),
+      'backup:create': async () =>
+        createBackup({
+          settings: await loadSettings(),
+          watchlist: await watchItem.getValue(),
+          favorites: await favoritesItem.getValue(),
+          history: await db.listHistory(),
+          reads: await readsItem.getValue(),
+        }),
+      'backup:restore': async ({ text }) => {
+        const backup = parseBackup(text);
+        if (!backup) return { ok: false };
+        const plan = planRestore(backup, {
+          settings: await loadSettings(),
+          watchlist: await watchItem.getValue(),
+          favorites: await favoritesItem.getValue(),
+          history: await db.listHistory(),
+          reads: await readsItem.getValue(),
+        });
+        await saveSettings(plan.settings);
+        await watchItem.setValue(plan.watchlist);
+        await favoritesItem.setValue(plan.favorites);
+        for (const entry of plan.newHistory) await db.addHistory(entry);
+        await readsItem.setValue(plan.reads);
+        scheduleWatchAlarm();
+        void updateBadge();
+        log.info(
+          `Restored a backup: ${plan.report.watch} watched creators, ${plan.report.favorites} favorites, ${plan.report.history} downloads`,
+        );
+        return { ok: true, ...plan.report };
+      },
+      'favorites:toggle': async ({ favorite }) => {
+        const list = await favoritesItem.getValue();
+        const key = favoriteKey(
+          favorite.kind,
+          favorite.service,
+          favorite.creatorId,
+          favorite.postId,
+        );
+        if (list.some((f) => f.key === key)) {
+          await favoritesItem.setValue(list.filter((f) => f.key !== key));
+          return { favorite: false };
+        }
+        await favoritesItem.setValue([
+          { ...favorite, key, note: '', addedAt: Date.now() },
+          ...list,
+        ]);
+        return { favorite: true };
+      },
+      'favorites:remove': async ({ keys }) => {
+        const drop = new Set(keys);
+        await favoritesItem.setValue(
+          (await favoritesItem.getValue()).filter((f) => !drop.has(f.key)),
+        );
+        return null;
+      },
+      'favorites:update': async ({ key, title, note }) => {
+        const list = await favoritesItem.getValue();
+        await favoritesItem.setValue(
+          list.map((f) =>
+            f.key === key
+              ? {
+                  ...f,
+                  ...(title !== undefined ? { title } : {}),
+                  ...(note !== undefined ? { note } : {}),
+                }
+              : f,
+          ),
+        );
+        return null;
+      },
+      'favorites:import': async ({ text }) => {
+        const list = await favoritesItem.getValue();
+        const have = new Set(list.map((f) => f.key));
+        const fresh = parseFavorites(text).filter((f) => !have.has(f.key));
+        await favoritesItem.setValue([...fresh, ...list]);
+        return { added: fresh.length };
+      },
+      'reads:known': async ({ keys }) => {
+        const reads = new Set(await readsItem.getValue());
+        return keys.filter((k) => reads.has(k));
+      },
+      'bridge:status': async () => ({
+        ...(await bridge.status()),
+        pairedAt: (await bridgeItem.getValue()).pairedAt ?? null,
+      }),
+      'bridge:pair': async ({ code }) =>
+        viaBridge(async () => {
+          const status = await bridge.pair(code, extensionName());
+          log.info(`Paired with Pawchive Downloader ${status.version ?? ''}`.trim());
+          return status;
+        }),
+      'bridge:unpair': async () => {
+        await bridge.unpair();
+        log.info('Unpaired from the desktop app');
+        return null;
+      },
+      'bridge:send': async ({ request }) =>
+        viaBridge(async () => {
+          const result = await bridge.send(request);
+          const label =
+            request.kind === 'creator' ? request.creatorId : (request.title ?? request.kind);
+          log.info(`Sent "${label}" to the desktop app`);
+          return result;
+        }),
+      'bridge:jobs': async () => bridge.jobs().catch(() => []),
+      'bridge:action': async ({ jobId, action }) => {
+        await bridge.act(jobId, action);
+        return null;
+      },
+      'bridge:watch': async ({ service, creatorId, name }) =>
+        viaBridge(async () => ({ added: await bridge.watch(service, creatorId, name) })),
       'logs:list': async () => logbook.list(),
       'logs:clear': async () => {
         logbook.clear();

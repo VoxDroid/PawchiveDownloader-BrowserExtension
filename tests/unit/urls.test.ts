@@ -64,11 +64,13 @@ describe('parsePageUrl', () => {
       kind: 'listing',
       offset: 0,
       query: 'test',
+      site: 'pawchive',
     });
   });
 
   it('ignores other hosts and pages', () => {
-    expect(parsePageUrl('https://kemono.cr/patreon/user/1/post/2').kind).toBe('other');
+    expect(parsePageUrl('https://example.com/patreon/user/1/post/2').kind).toBe('other');
+    expect(parsePageUrl('https://kemono.cr.evil.com/patreon/user/1/post/2').kind).toBe('other');
     expect(parsePageUrl('https://n1.pawchive.pw/patreon/user/1/post/2').kind).toBe('other');
     expect(parsePageUrl('https://pawchive.pw/').kind).toBe('other');
     expect(parsePageUrl('garbage').kind).toBe('other');

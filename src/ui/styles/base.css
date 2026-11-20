@@ -204,3 +204,13 @@
     opacity: 0.45;
   }
 }
+
+/* Blur previews: thumbnails, avatars and banners stay blurred until pointed at. */
+[data-blur='on'] .blurrable {
+  filter: blur(14px) saturate(0.6);
+  transition: filter 0.2s ease;
+}
+[data-blur='on'] .blurrable:hover,
+[data-blur='on'] :hover > .blurrable {
+  filter: none;
+}

@@ -1,6 +1,8 @@
 import { defineConfig } from 'wxt';
+import { SITE_MATCHES, SITE_PAGE_MATCHES } from './src/lib/pawchive/sites';
 
-const HOSTS = ['https://pawchive.pw/*', 'https://*.pawchive.pw/*'];
+/** Pawchive, Kemono and Coomer, current and old domains, with their media servers. */
+const HOSTS = [...SITE_MATCHES];
 
 // https://wxt.dev/api/config.html
 export default defineConfig({
@@ -31,10 +33,12 @@ export default defineConfig({
       ...(browser === 'firefox' ? [] : ['offscreen']),
     ],
     host_permissions: HOSTS,
+    // The desktop app's bridge, asked for when pairing (see lib/bridge.ts).
+    optional_host_permissions: ['http://127.0.0.1/*'],
     web_accessible_resources: [
       {
         resources: ['fonts/*.woff2', 'icon/*.png'],
-        matches: HOSTS,
+        matches: [...SITE_PAGE_MATCHES],
       },
     ],
     action: {

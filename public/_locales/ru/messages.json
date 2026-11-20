@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Скачивайте посты, вложения и авторов целиком с Pawchive: ZIP-архивы, шаблоны имён, история и отслеживание.",
+    "message": "Скачивайте посты, вложения и авторов целиком с Pawchive, Kemono и Coomer: ZIP, отслеживание и связь с приложением.",
     "description": "Store and browser description, at most 132 characters"
   },
   "cmdTogglePanel": {

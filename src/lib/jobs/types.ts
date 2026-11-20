@@ -4,13 +4,19 @@ import type { ConflictAction, ContentFormat, DownloadMode, PreviewOnlyAction } f
 export type JobStatus =
   'resolving' | 'queued' | 'running' | 'paused' | 'done' | 'failed' | 'cancelled';
 export type ItemStatus = 'pending' | 'active' | 'done' | 'failed' | 'skipped' | 'cancelled';
-export type SkipReason = 'duplicate' | 'preview-only' | 'no-relay' | 'too-large';
+export type SkipReason = 'duplicate' | 'preview-only' | 'no-relay' | 'too-large' | 'empty';
 
 export interface JobOptions {
   mode: DownloadMode;
   categories: FileCategory[];
   saveContent: ContentFormat;
   saveMetadata: boolean;
+  saveLinks: boolean;
+  saveComments: boolean;
+  saveAnnouncements: boolean;
+  thumbnailFallback: boolean;
+  /** Save every file's thumbnail instead of the file (a media server is down). */
+  thumbnailsOnly: boolean;
   previewOnly: PreviewOnlyAction;
   skipDownloaded: boolean;
   folderTemplate: string;
@@ -72,6 +78,10 @@ interface ItemBase {
   downloadId?: number;
   /** Do not start again before this time (epoch ms), for retry backoff. */
   notBefore?: number;
+  /** When the item last failed for good (epoch ms), for automatic retries. */
+  failedAt?: number;
+  /** Automatic retries it has had. */
+  autoRetries?: number;
 }
 
 export interface FileItem extends ItemBase {
@@ -79,12 +89,20 @@ export interface FileItem extends ItemBase {
   source: FileSource;
   hash: string | null;
   category: FileCategory;
+  /** Thumbnail to save instead when the full file cannot be had. */
+  thumbnail?: string | null;
+  /** The item already switched to its thumbnail. */
+  fallback?: boolean;
 }
 
 export interface TextItem extends ItemBase {
   kind: 'text';
   text: string;
   mime: string;
+  /** The text is fetched when the item runs (comments, announcements). */
+  fetch?: 'comments' | 'announcements';
+  /** Title, page and creator name for fetched texts. */
+  meta?: { title: string; url: string; name: string };
 }
 
 export interface ZipItem extends ItemBase {

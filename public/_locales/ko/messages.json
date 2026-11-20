@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Pawchive의 게시물, 첨부 파일, 크리에이터의 모든 게시물을 다운로드합니다. ZIP 압축, 파일 이름 템플릿, 기록, 관심 목록을 지원합니다.",
+    "message": "Pawchive, Kemono, Coomer에서 게시물, 첨부 파일, 크리에이터 전체를 다운로드. ZIP, 관심 목록, 데스크톱 앱 연동.",
     "description": "Store and browser description, at most 132 characters"
   },
   "cmdTogglePanel": {

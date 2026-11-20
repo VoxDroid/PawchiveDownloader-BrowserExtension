@@ -1,4 +1,11 @@
-import { CREATOR_URL, expect, POST_URL, recordedDownloads, test } from './fixtures';
+import {
+  CREATOR_URL,
+  expect,
+  KEMONO_POST_URL,
+  POST_URL,
+  recordedDownloads,
+  test,
+} from './fixtures';
 
 test.describe('in-page panel', () => {
   test("lists a post's files and downloads the selection", async ({ context, worker }) => {
@@ -86,5 +93,48 @@ test.describe('extension pages', () => {
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
     await expect(page.getByText('Pawchive Downloader').first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Downloads' })).toBeVisible();
+  });
+});
+
+test.describe('Kemono', () => {
+  test('works on Kemono with its links tab, and saves into the Kemono folder', async ({
+    context,
+    worker,
+  }) => {
+    const page = await context.newPage();
+    await page.goto(KEMONO_POST_URL);
+    const ui = page.locator('pawchive-downloader');
+    await ui.locator('button.fab').click();
+    const panel = ui.getByRole('complementary', { name: 'Pawchive Downloader' });
+    await expect(panel.getByText('Kemono set')).toBeVisible();
+    // The service and the site are shown separately.
+    await expect(panel.getByText(/fanbox\s*\/\s*Kemono/)).toBeVisible();
+
+    // Outside links and passwords have their own tab.
+    await panel.getByRole('radio', { name: /1 link/ }).click();
+    await expect(panel.getByText('https://mega.nz/folder/abc#key')).toBeVisible();
+    await expect(panel.getByText('cat123')).toBeVisible();
+    await panel.getByRole('radio', { name: /\d+ files/ }).click();
+
+    await panel.getByRole('button', { name: 'Archives 1' }).click();
+    await panel.getByRole('button', { name: 'Invert selection' }).click();
+    await panel.locator('.tile').first().click();
+    await panel.getByRole('button', { name: 'Download 1 file' }).click();
+    // The media server answers in this mock; if the check ever times out
+    // offline, queue the full files anyway.
+    const dialog = ui.getByRole('dialog');
+    const queued = ui.getByText(/Added 1 file to the queue/);
+    await expect(dialog.or(queued)).toBeVisible({ timeout: 15_000 });
+    if (await dialog.isVisible())
+      await dialog.getByRole('button', { name: /Queue the full files/ }).click();
+
+    await expect
+      .poll(async () => (await recordedDownloads(worker)).map((d) => d.filename).join('\n'))
+      .toContain('Kemono/Kemo (fanbox)/');
+    const downloads = await recordedDownloads(worker);
+    const file = downloads.find((d) => d.filename.endsWith('.rar'));
+    expect(file?.url).toMatch(/^https:\/\/kemono\.cr\/data\//);
+    // links.txt is saved next to it.
+    expect(downloads.some((d) => d.filename.endsWith('/links.txt'))).toBe(true);
   });
 });

@@ -142,7 +142,7 @@
       >
         <div class="top">
           <img
-            class="avatar"
+            class="avatar blurrable"
             src={pageUrls.icon(entry.service, entry.creatorId)}
             alt=""
             loading="lazy"

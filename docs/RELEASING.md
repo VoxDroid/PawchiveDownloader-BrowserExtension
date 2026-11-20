@@ -1,7 +1,9 @@
 # Releasing
 
-Releases are built by `.github/workflows/release.yml` when a version tag is
-pushed.
+The source here is free to build. Official, ready-made packages are built in
+the private **PawchiveDownloader-BrowserExtension-Releases** repository from a
+version tag of this repository, the same way as the desktop app's official
+builds, and are offered on [Ko-fi](https://ko-fi.com/izeno).
 
 ## Steps
 
@@ -28,32 +30,23 @@ git tag -s vx.y.z -m "Pawchive Downloader x.y.z"
 git push --follow-tags
 ```
 
-The workflow checks that the tag matches `package.json`, runs lint, type
-checks, translation checks and tests, builds the Chrome, Edge and Firefox
-packages plus a source archive, lints the Firefox package with Mozilla's
-linter, and publishes a GitHub release with the changelog section as notes.
+5. In PawchiveDownloader-BrowserExtension-Releases, run **Actions > Build
+   official release** with the tag. It checks that the tag matches
+   `package.json`, runs the checks and tests, builds the Chrome, Edge and
+   Firefox packages, gets the Firefox package signed by Mozilla (unlisted), and
+   attaches one zip per browser to a draft release, together with the Ko-fi
+   images and listing texts.
 
-To rebuild an existing tag, run the workflow manually and enter the tag.
+## Testing the desktop app bridge
 
-## Submitting to the stores (optional)
-
-Store submission is off by default. To turn it on, set the repository
-variable `PUBLISH_TO_STORES` to `true` and add these secrets:
-
-| Store            | Secrets                                                                                   |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| Chrome Web Store | `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN` |
-| Firefox Add-ons  | `FIREFOX_EXTENSION_ID`, `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET`                        |
-| Edge Add-ons     | `EDGE_PRODUCT_ID`, `EDGE_CLIENT_ID`, `EDGE_API_KEY`                                       |
-
-`wxt submit` uploads the packages; see the
-[WXT publishing guide](https://wxt.dev/guide/essentials/publishing.html) for
-how to create the credentials. Firefox needs the source archive because the
-code is bundled; it is uploaded automatically.
+`tests/unit/bridge-contract.test.ts` drives the real desktop app's bridge from
+the extension's client. It is skipped unless `BRIDGE_CONTRACT_DIR` is set; the
+app's side writes the port and a pairing code to that folder and checks what
+arrives. See the test for details.
 
 ## Store listing notes
 
-- Single purpose: download posts and files from Pawchive.
+- Single purpose: download posts and files from Pawchive, Kemono and Coomer.
 - Permission reasons are listed in [PRIVACY.md](../PRIVACY.md).
 - Mozilla's linter reports two `innerHTML` warnings from Svelte's compiled
   runtime, which clones static templates; no site data is assigned to

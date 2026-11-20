@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { call } from '../../../lib/messages';
+  import { SITE_MATCHES } from '../../../lib/pawchive/sites';
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { browser } from 'wxt/browser';
@@ -16,6 +18,7 @@
     DEFAULT_SETTINGS,
     LOCALES,
     THEMES,
+    AUTO_RETRY_MINUTES,
     WATCH_INTERVALS,
     type Settings,
   } from '../../../lib/settings';
@@ -37,6 +40,7 @@
   import PageHeader from '../PageHeader.svelte';
   import SettingRow from '../SettingRow.svelte';
   import SettingSection from '../SettingSection.svelte';
+  import DesktopAppSection from '../DesktopAppSection.svelte';
   import TemplateField from '../TemplateField.svelte';
   import { pickTextFile, saveTextFile, stamp } from '../download';
 
@@ -64,7 +68,7 @@
   const archiveExample = $derived(buildArchivePath(s.folderTemplate, s.archiveTemplate, SAMPLE));
 
   const MB = (n: number) => (n >= 1024 ? `${(n / 1024).toLocaleString()} GB` : `${n} MB`);
-  const HOSTS = ['https://pawchive.pw/*', 'https://*.pawchive.pw/*'];
+  const HOSTS = [...SITE_MATCHES];
 
   onMount(async () => {
     commands = (await browser.commands.getAll().catch(() => [])) as typeof commands;
@@ -104,6 +108,33 @@
     void browser.tabs.create({ url }).catch(() => toast(t('settings.shortcutsManual'), 'info'));
   }
 
+  async function saveBackup() {
+    const backup = await call('backup:create');
+    saveTextFile(
+      `pawchive-downloader-backup-${stamp()}.json`,
+      `${JSON.stringify(backup, null, 2)}
+`,
+      'application/json',
+    );
+    toast(t('settings.backupSaved'), 'success');
+  }
+
+  async function restoreBackup() {
+    const text = await pickTextFile('.json,application/json');
+    if (text === null) return;
+    const result = await call('backup:restore', { text });
+    if (!result.ok) toast(t('settings.backupInvalid'), 'error');
+    else
+      toast(
+        t('settings.backupRestored', {
+          watch: result.watch,
+          favorites: result.favorites,
+          history: result.history,
+        }),
+        'success',
+      );
+  }
+
   const sections = [
     ['appearance', 'palette'],
     ['downloads', 'download'],
@@ -111,6 +142,7 @@
     ['zip', 'folderZip'],
     ['page', 'web'],
     ['background', 'bell'],
+    ['app', 'link'],
     ['shortcuts', 'keyboard'],
     ['data', 'database'],
   ] as const;
@@ -302,6 +334,45 @@
       onchange={(v) => set('saveMetadata', v)}
     />
   </SettingRow>
+  <SettingRow label={t('settings.links')} description={t('settings.linksHint')}>
+    <Switch
+      label={t('settings.links')}
+      checked={s.saveLinks}
+      onchange={(v) => set('saveLinks', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.comments')} description={t('settings.commentsHint')}>
+    <Switch
+      label={t('settings.comments')}
+      checked={s.saveComments}
+      onchange={(v) => set('saveComments', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.announcements')} description={t('settings.announcementsHint')}>
+    <Switch
+      label={t('settings.announcements')}
+      checked={s.saveAnnouncements}
+      onchange={(v) => set('saveAnnouncements', v)}
+    />
+  </SettingRow>
+  <SettingRow
+    label={t('settings.thumbnailFallback')}
+    description={t('settings.thumbnailFallbackHint')}
+  >
+    <Switch
+      label={t('settings.thumbnailFallback')}
+      checked={s.thumbnailFallback}
+      onchange={(v) => set('thumbnailFallback', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.autoRetry')} description={t('settings.autoRetryHint')}>
+    <Select
+      label={t('settings.autoRetry')}
+      value={s.autoRetryMinutes}
+      onchange={(v) => set('autoRetryMinutes', v)}
+      options={AUTO_RETRY_MINUTES.map((n) => ({ value: n, label: t(`retry.${n}`) }))}
+    />
+  </SettingRow>
   <SettingRow label={t('settings.categories')} description={t('settings.categoriesHint')} stacked>
     <div class="chips">
       {#each FILE_CATEGORIES as category (category)}
@@ -432,6 +503,20 @@
       onchange={(v) => set('markDownloaded', v)}
     />
   </SettingRow>
+  <SettingRow label={t('settings.readMarkers')} description={t('settings.readMarkersHint')}>
+    <Switch
+      label={t('settings.readMarkers')}
+      checked={s.readMarkers}
+      onchange={(v) => set('readMarkers', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.blurPreviews')} description={t('settings.blurPreviewsHint')}>
+    <Switch
+      label={t('settings.blurPreviews')}
+      checked={s.blurPreviews}
+      onchange={(v) => set('blurPreviews', v)}
+    />
+  </SettingRow>
 </SettingSection>
 
 <SettingSection id="s-background" icon="bell" title={t('settings.background')}>
@@ -445,6 +530,16 @@
         { value: 'errors', label: t('notify.errors') },
         { value: 'none', label: t('notify.none') },
       ]}
+    />
+  </SettingRow>
+  <SettingRow
+    label={t('settings.privateNotifications')}
+    description={t('settings.privateNotificationsHint')}
+  >
+    <Switch
+      label={t('settings.privateNotifications')}
+      checked={s.privateNotifications}
+      onchange={(v) => set('privateNotifications', v)}
     />
   </SettingRow>
   <SettingRow label={t('settings.watchInterval')} description={t('settings.watchIntervalHint')}>
@@ -463,6 +558,8 @@
     />
   </SettingRow>
 </SettingSection>
+
+<DesktopAppSection />
 
 <SettingSection
   id="s-shortcuts"
@@ -499,6 +596,10 @@
         )}>{t('common.export')}</Button
     >
     <Button size="sm" icon="import" onclick={importFile}>{t('common.import')}</Button>
+  </SettingRow>
+  <SettingRow label={t('settings.backup')} description={t('settings.backupHint')}>
+    <Button size="sm" icon="export" onclick={saveBackup}>{t('settings.backupSave')}</Button>
+    <Button size="sm" icon="import" onclick={restoreBackup}>{t('settings.backupRestore')}</Button>
   </SettingRow>
   <SettingRow label={t('settings.reset')} description={t('settings.resetHint')}>
     <Button size="sm" variant="danger" icon="restore" onclick={() => (resetOpen = true)}
