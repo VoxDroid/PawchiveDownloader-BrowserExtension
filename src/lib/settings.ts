@@ -69,6 +69,9 @@ export interface Settings {
   notifications: NotificationLevel;
   /** Notifications without post titles or creator names. */
   privateNotifications: boolean;
+  // Desktop app
+  /** Send downloads to the paired desktop app when it runs. */
+  sendToApp: boolean;
   watchIntervalMinutes: number;
   recordHistory: boolean;
   logLevel: LogLevel;
@@ -121,6 +124,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   blurPreviews: false,
   notifications: 'all',
   privateNotifications: false,
+  sendToApp: false,
   watchIntervalMinutes: 360,
   recordHistory: true,
   logLevel: 'info',
@@ -226,6 +230,7 @@ export function coerceSettings(input: unknown): Settings {
     blurPreviews: bool(s.blurPreviews, d.blurPreviews),
     notifications: oneOf(s.notifications, ['all', 'errors', 'none'] as const, d.notifications),
     privateNotifications: bool(s.privateNotifications, d.privateNotifications),
+    sendToApp: bool(s.sendToApp, d.sendToApp),
     watchIntervalMinutes: (WATCH_INTERVALS as readonly number[]).includes(
       Number(s.watchIntervalMinutes),
     )

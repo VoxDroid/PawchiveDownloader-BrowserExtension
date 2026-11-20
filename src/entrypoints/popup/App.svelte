@@ -15,6 +15,7 @@
   import Icon from '../../ui/components/Icon.svelte';
   import IconButton from '../../ui/components/IconButton.svelte';
   import JobCard from '../../ui/components/JobCard.svelte';
+  import AppJobs from './AppJobs.svelte';
   import Logo from '../../ui/components/Logo.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
 
@@ -224,6 +225,8 @@
       <Icon name="chevronRight" class="chev" />
     </button>
   {/if}
+
+  <AppJobs />
 
   <section class="jobs">
     <div class="jobs-head">

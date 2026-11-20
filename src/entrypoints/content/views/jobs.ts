@@ -45,6 +45,16 @@ export async function queueJob(
   try {
     const checked = await checkMediaServer(request, probeUrl);
     if (!checked) return false;
+    // With the desktop app paired and running, it downloads instead; when it
+    // is closed, the extension does it itself.
+    if (app.settings.sendToApp) {
+      const sent = await call('bridge:send', { request: checked }).catch(() => null);
+      if (sent?.ok) {
+        toast(sent.duplicate ? t('bridge.sentDuplicate') : t('bridge.sent'), 'success');
+        return true;
+      }
+      toast(t('bridge.fallback'), 'info');
+    }
     await call('jobs:create', { request: checked });
     toast(message, 'success', {
       action: {

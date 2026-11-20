@@ -17,6 +17,7 @@ import {
 } from '../lib/messages';
 import { SiteLimiter } from '../lib/net/limiter';
 import { PawchiveClient } from '../lib/pawchive/client';
+import { AppBridge, BridgeError, EMPTY_BRIDGE, type BridgeState } from '../lib/bridge';
 import { SITE_PAGE_MATCHES, SITES, SITE_IDS } from '../lib/pawchive/sites';
 import { parsePageUrl } from '../lib/pawchive/urls';
 import {
@@ -56,6 +57,7 @@ const CREATOR_LINKS = SITE_DOMAINS.flatMap((d) => [
 const jobsItem = storage.defineItem<Job[]>('local:jobs', { fallback: [] });
 const watchItem = storage.defineItem<WatchEntry[]>('local:watchlist', { fallback: [] });
 const logsItem = storage.defineItem<LogEntry[]>('local:logs', { fallback: [] });
+const bridgeItem = storage.defineItem<BridgeState>('local:bridge', { fallback: EMPTY_BRIDGE });
 
 export default defineBackground({
   type: 'module',
@@ -113,6 +115,25 @@ export default defineBackground({
     }
 
     // -------------------------------------------------------------- engine
+
+    // The desktop app, when it runs and was paired (see lib/bridge.ts).
+    const bridge = new AppBridge({
+      fetch: (input, init) => fetch(input, init),
+      load: async () => ({ ...EMPTY_BRIDGE, ...(await bridgeItem.getValue()) }),
+      save: (state) => bridgeItem.setValue(state),
+    });
+
+    /** Runs a bridge call, turning "app closed" and similar into a result. */
+    async function viaBridge<T extends object>(
+      run: () => Promise<T>,
+    ): Promise<({ ok: true } & T) | { ok: false; code: string }> {
+      try {
+        return { ok: true, ...(await run()) };
+      } catch (error) {
+        if (error instanceof BridgeError) return { ok: false, code: error.code };
+        return { ok: false, code: 'network' };
+      }
+    }
 
     const engine = new DownloadEngine({
       client,
@@ -357,6 +378,16 @@ export default defineBackground({
       }
     });
 
+    /** How the app lists this pairing: browser and extension name. */
+    function extensionName(): string {
+      const browserName = IS_FIREFOX
+        ? 'Firefox'
+        : /Edg\//.test(navigator.userAgent)
+          ? 'Edge'
+          : 'Chrome';
+      return `${browserName}: ${browser.runtime.getManifest().name}`;
+    }
+
     // ------------------------------------------------------- media servers
 
     const mediaDown = new Map<string, number>();
@@ -557,6 +588,36 @@ export default defineBackground({
         return { added };
       },
       'media:check': async ({ url }) => checkMedia(url),
+      'bridge:status': async () => ({
+        ...(await bridge.status()),
+        pairedAt: (await bridgeItem.getValue()).pairedAt ?? null,
+      }),
+      'bridge:pair': async ({ code }) =>
+        viaBridge(async () => {
+          const status = await bridge.pair(code, extensionName());
+          log.info(`Paired with Pawchive Downloader ${status.version ?? ''}`.trim());
+          return status;
+        }),
+      'bridge:unpair': async () => {
+        await bridge.unpair();
+        log.info('Unpaired from the desktop app');
+        return null;
+      },
+      'bridge:send': async ({ request }) =>
+        viaBridge(async () => {
+          const result = await bridge.send(request);
+          const label =
+            request.kind === 'creator' ? request.creatorId : (request.title ?? request.kind);
+          log.info(`Sent "${label}" to the desktop app`);
+          return result;
+        }),
+      'bridge:jobs': async () => bridge.jobs().catch(() => []),
+      'bridge:action': async ({ jobId, action }) => {
+        await bridge.act(jobId, action);
+        return null;
+      },
+      'bridge:watch': async ({ service, creatorId, name }) =>
+        viaBridge(async () => ({ added: await bridge.watch(service, creatorId, name) })),
       'logs:list': async () => logbook.list(),
       'logs:clear': async () => {
         logbook.clear();

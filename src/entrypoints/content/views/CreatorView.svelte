@@ -196,6 +196,15 @@
         });
         watching = true;
         toast(t('watch.added', { name: creatorInfo().name }), 'success');
+        // With downloads going to the desktop app, it watches the creator too.
+        if (app.settings.sendToApp) {
+          const inApp = await call('bridge:watch', {
+            service: ref.service,
+            creatorId: ref.creatorId,
+            name: creatorInfo().name,
+          }).catch(() => null);
+          if (inApp?.ok) toast(t('bridge.watchedInApp'), 'success');
+        }
       }
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'error');

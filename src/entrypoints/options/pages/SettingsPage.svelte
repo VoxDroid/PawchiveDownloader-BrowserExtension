@@ -39,6 +39,7 @@
   import PageHeader from '../PageHeader.svelte';
   import SettingRow from '../SettingRow.svelte';
   import SettingSection from '../SettingSection.svelte';
+  import DesktopAppSection from '../DesktopAppSection.svelte';
   import TemplateField from '../TemplateField.svelte';
   import { pickTextFile, saveTextFile, stamp } from '../download';
 
@@ -113,6 +114,7 @@
     ['zip', 'folderZip'],
     ['page', 'web'],
     ['background', 'bell'],
+    ['app', 'link'],
     ['shortcuts', 'keyboard'],
     ['data', 'database'],
   ] as const;
@@ -528,6 +530,8 @@
     />
   </SettingRow>
 </SettingSection>
+
+<DesktopAppSection />
 
 <SettingSection
   id="s-shortcuts"
