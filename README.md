@@ -18,6 +18,11 @@
 </p>
 
 <p align="center">
+  <a href="https://ko-fi.com/izeno/shop"><img src="assets/download-button.svg" alt="Get the Pawchive Downloader browser extension for Chrome, Edge and Firefox" width="314" /></a>
+  <a href="https://ko-fi.com/izeno/shop/pawchivedownloader"><img src="assets/app-download-button.svg" alt="Download Pawchive Downloader for Windows, macOS and Linux" width="314" /></a>
+</p>
+
+<p align="center">
   <a href="https://ko-fi.com/izeno"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" /></a>
 </p>
 
@@ -37,6 +42,7 @@ Pawchive Downloader adds a download panel to every post and creator page on Pawc
 - [Screenshots](#screenshots)
 - [Installation](#installation)
 - [Using it](#using-it)
+- [The desktop app](#the-desktop-app)
 - [File names and folders](#file-names-and-folders)
 - [Settings](#settings)
 - [Privacy and politeness](#privacy-and-politeness)
@@ -148,6 +154,16 @@ The unpacked extensions are written to `.output/chrome-mv3` and `.output/firefox
 Files are saved in your browser's downloads folder, organised by the folder template (by default `<site>/<creator> (<service>)/<date> <title> [<post id>]/`, so `Kemono/...` for Kemono posts).
 
 To hand downloads to the desktop app, open **Settings > Desktop app**, then in the app open Settings > Browser extension, turn it on and press **Pair**. Enter the six-digit code in the extension and switch on **Send downloads to the app**.
+
+## The desktop app
+
+[Pawchive Downloader](https://github.com/VoxDroid/PawchiveDownloader) is the desktop app for Windows, macOS and Linux that this extension pairs with. It keeps downloading after the browser closes, resumes and verifies every file, downloads and unpacks the Mega, Google Drive, Dropbox, Pixeldrain, GoFile and MediaFire links that posts share, and searches every creator by name.
+
+With the two paired, the panel's downloads and watched creators go to the app, and the popup shows the app's queue with pause, resume and retry. When the app is closed, the extension downloads by itself. The connection stays on this computer (`127.0.0.1`) and is described in the app's [docs/BRIDGE.md](https://github.com/VoxDroid/PawchiveDownloader/blob/main/docs/BRIDGE.md).
+
+<p align="center">
+  <a href="https://ko-fi.com/izeno/shop/pawchivedownloader"><img src="assets/app-download-button.svg" alt="Download Pawchive Downloader for Windows, macOS and Linux" width="314" /></a>
+</p>
 
 ## File names and folders
 
