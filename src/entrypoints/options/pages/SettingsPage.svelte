@@ -17,6 +17,7 @@
     DEFAULT_SETTINGS,
     LOCALES,
     THEMES,
+    AUTO_RETRY_MINUTES,
     WATCH_INTERVALS,
     type Settings,
   } from '../../../lib/settings';
@@ -303,6 +304,45 @@
       onchange={(v) => set('saveMetadata', v)}
     />
   </SettingRow>
+  <SettingRow label={t('settings.links')} description={t('settings.linksHint')}>
+    <Switch
+      label={t('settings.links')}
+      checked={s.saveLinks}
+      onchange={(v) => set('saveLinks', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.comments')} description={t('settings.commentsHint')}>
+    <Switch
+      label={t('settings.comments')}
+      checked={s.saveComments}
+      onchange={(v) => set('saveComments', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.announcements')} description={t('settings.announcementsHint')}>
+    <Switch
+      label={t('settings.announcements')}
+      checked={s.saveAnnouncements}
+      onchange={(v) => set('saveAnnouncements', v)}
+    />
+  </SettingRow>
+  <SettingRow
+    label={t('settings.thumbnailFallback')}
+    description={t('settings.thumbnailFallbackHint')}
+  >
+    <Switch
+      label={t('settings.thumbnailFallback')}
+      checked={s.thumbnailFallback}
+      onchange={(v) => set('thumbnailFallback', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.autoRetry')} description={t('settings.autoRetryHint')}>
+    <Select
+      label={t('settings.autoRetry')}
+      value={s.autoRetryMinutes}
+      onchange={(v) => set('autoRetryMinutes', v)}
+      options={AUTO_RETRY_MINUTES.map((n) => ({ value: n, label: t(`retry.${n}`) }))}
+    />
+  </SettingRow>
   <SettingRow label={t('settings.categories')} description={t('settings.categoriesHint')} stacked>
     <div class="chips">
       {#each FILE_CATEGORIES as category (category)}
@@ -433,6 +473,20 @@
       onchange={(v) => set('markDownloaded', v)}
     />
   </SettingRow>
+  <SettingRow label={t('settings.readMarkers')} description={t('settings.readMarkersHint')}>
+    <Switch
+      label={t('settings.readMarkers')}
+      checked={s.readMarkers}
+      onchange={(v) => set('readMarkers', v)}
+    />
+  </SettingRow>
+  <SettingRow label={t('settings.blurPreviews')} description={t('settings.blurPreviewsHint')}>
+    <Switch
+      label={t('settings.blurPreviews')}
+      checked={s.blurPreviews}
+      onchange={(v) => set('blurPreviews', v)}
+    />
+  </SettingRow>
 </SettingSection>
 
 <SettingSection id="s-background" icon="bell" title={t('settings.background')}>
@@ -446,6 +500,16 @@
         { value: 'errors', label: t('notify.errors') },
         { value: 'none', label: t('notify.none') },
       ]}
+    />
+  </SettingRow>
+  <SettingRow
+    label={t('settings.privateNotifications')}
+    description={t('settings.privateNotificationsHint')}
+  >
+    <Switch
+      label={t('settings.privateNotifications')}
+      checked={s.privateNotifications}
+      onchange={(v) => set('privateNotifications', v)}
     />
   </SettingRow>
   <SettingRow label={t('settings.watchInterval')} description={t('settings.watchIntervalHint')}>

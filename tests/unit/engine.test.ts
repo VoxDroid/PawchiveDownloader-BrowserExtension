@@ -100,7 +100,9 @@ describe('DownloadEngine: individual files', () => {
   });
 
   it('stops retrying after the configured number of attempts', async () => {
-    const h = createHarness({ settings: { maxRetries: 1, saveContent: 'none' } });
+    const h = createHarness({
+      settings: { maxRetries: 1, saveContent: 'none', thumbnailFallback: false },
+    });
     await h.engine.init();
     const id = await h.engine.create({
       kind: 'posts',

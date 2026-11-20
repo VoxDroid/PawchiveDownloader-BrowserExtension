@@ -18,6 +18,7 @@
   import { siteClient } from '../page.svelte';
   import DownloadFooter, { type FooterChoice } from './DownloadFooter.svelte';
   import FileTile from './FileTile.svelte';
+  import LinksView from './LinksView.svelte';
   import { choiceOptions, queueJob } from './jobs';
 
   let { ref }: { ref: { service: string; creatorId: string; postId: string } } = $props();
@@ -30,7 +31,7 @@
   let selected = $state(new Set<number>());
   let filter = $state<Set<FileCategory>>(new Set());
   let hideDownloaded = $state(false);
-  let tab = $state<'files' | 'text'>('files');
+  let tab = $state<'files' | 'text' | 'links'>('files');
   let busy = $state(false);
   let lastIndex: number | null = null;
   const controller = new AbortController();
@@ -146,6 +147,7 @@
         options: choiceOptions(choice),
       },
       t('toast.queuedFiles', { count: fileIndexes.length }),
+      post.files.find((f) => fileIndexes.includes(f.index) && f.url)?.url ?? null,
     );
     busy = false;
   }
@@ -185,7 +187,7 @@
     <div class="loading"><Spinner size={22} /><span>{t('post.loading')}</span></div>
   {:else}
     <div class="intro" in:fade={{ duration: 200 }}>
-      <img class="avatar" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
+      <img class="avatar blurrable" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
       <div class="meta">
         <h2 class="title" title={post.title}>{post.title || t('common.untitled')}</h2>
         <p class="sub truncate">
@@ -204,6 +206,15 @@
         options={[
           { value: 'files', label: t('post.files', { count: post.files.length }), icon: 'folder' },
           { value: 'text', label: t('post.text'), icon: 'text' },
+          ...(post.links.length || post.passwords.length
+            ? [
+                {
+                  value: 'links' as const,
+                  label: t('post.links', { count: post.links.length }),
+                  icon: 'link' as const,
+                },
+              ]
+            : []),
         ]}
       />
     </div>
@@ -275,6 +286,8 @@
           {/each}
         </div>
       {/if}
+    {:else if tab === 'links'}
+      <LinksView links={post.links} passwords={post.passwords} />
     {:else}
       <div class="text-view">
         {#if text}

@@ -1,4 +1,6 @@
 import { call } from '../../../lib/messages';
+import { siteFromUrl, siteName } from '../../../lib/pawchive/sites';
+import { askMediaDown } from '../prompts.svelte';
 import type { JobOptions, JobRequest } from '../../../lib/jobs/types';
 import { app, t } from '../../../ui/state/app.svelte';
 import { toast } from '../../../ui/state/toasts.svelte';
@@ -14,10 +16,36 @@ export function choiceOptions(choice: FooterChoice): Partial<JobOptions> {
   };
 }
 
+/**
+ * Before a Kemono or Coomer download, one tiny request checks the media server
+ * behind `probeUrl` (any full file of the job). When it does not answer, the
+ * user picks: cancel, thumbnails instead, or queue the full files anyway.
+ * Returns the request to send, or null to cancel.
+ */
+async function checkMediaServer(
+  request: JobRequest,
+  probeUrl: string | null | undefined,
+): Promise<JobRequest | null> {
+  const site = probeUrl ? siteFromUrl(probeUrl) : null;
+  if (!probeUrl || !site || site === 'pawchive') return request;
+  const check = await call('media:check', { url: probeUrl }).catch(() => null);
+  if (!check || check.reachable) return request;
+  const choice = await askMediaDown(siteName(site), check.host);
+  if (choice === 'cancel') return null;
+  if (choice === 'continue') return request;
+  return { ...request, options: { ...request.options, thumbnailsOnly: true } };
+}
+
 /** Sends a job to the background and confirms it with a toast. */
-export async function queueJob(request: JobRequest, message: string): Promise<boolean> {
+export async function queueJob(
+  request: JobRequest,
+  message: string,
+  probeUrl?: string | null,
+): Promise<boolean> {
   try {
-    await call('jobs:create', { request });
+    const checked = await checkMediaServer(request, probeUrl);
+    if (!checked) return false;
+    await call('jobs:create', { request: checked });
     toast(message, 'success', {
       action: {
         label: t('common.view'),

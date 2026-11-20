@@ -80,13 +80,23 @@ export const fmt = {
 
 // ------------------------------------------------------------------ theme
 
-export function themeAttributes(): { theme: string; motion: string; style: string } {
+export function themeAttributes(): {
+  theme: string;
+  motion: string;
+  blur: string;
+  style: string;
+} {
   const s = app.settings;
   const theme = s.theme === 'system' ? (app.systemDark ? 'midnight' : 'light') : s.theme;
   const reduce =
     s.reduceMotion === 'on' ||
     (s.reduceMotion === 'auto' && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  return { theme, motion: reduce ? 'reduced' : 'full', style: `--accent:${s.accent}` };
+  return {
+    theme,
+    motion: reduce ? 'reduced' : 'full',
+    blur: s.blurPreviews ? 'on' : 'off',
+    style: `--accent:${s.accent}`,
+  };
 }
 
 /** Keeps an element's theme attributes in sync with settings. */
@@ -95,6 +105,7 @@ export function themed(node: HTMLElement): void {
     const attrs = themeAttributes();
     node.dataset.theme = attrs.theme;
     node.dataset.motion = attrs.motion;
+    node.dataset.blur = attrs.blur;
     node.style.setProperty('--accent', app.settings.accent);
   });
 }
@@ -107,6 +118,7 @@ export function themeDocument(): void {
       if (!el) continue;
       el.dataset.theme = attrs.theme;
       el.dataset.motion = attrs.motion;
+      el.dataset.blur = attrs.blur;
       el.style.setProperty('--accent', app.settings.accent);
     }
     document.documentElement.lang = BCP47[app.locale];

@@ -41,6 +41,15 @@ export interface Settings {
   previewOnly: PreviewOnlyAction;
   saveContent: ContentFormat;
   saveMetadata: boolean;
+  /** Save `links.txt` with the post's outside links and archive passwords. */
+  saveLinks: boolean;
+  saveComments: boolean;
+  /** Save the creator's announcements once per download. */
+  saveAnnouncements: boolean;
+  /** Save the thumbnail when a media server is down or the file is gone. */
+  thumbnailFallback: boolean;
+  /** Put failed files back in the queue after this many minutes (0 = off), up to three times. */
+  autoRetryMinutes: number;
   categories: Record<FileCategory, boolean>;
   // ZIP
   zipMaxSizeMb: number;
@@ -52,8 +61,14 @@ export interface Settings {
   panelSide: 'right' | 'left';
   cardSelectors: boolean;
   markDownloaded: boolean;
+  /** Mark posts you opened before on the site's lists. */
+  readMarkers: boolean;
+  /** Keep thumbnails, avatars and banners blurred until pointed at. */
+  blurPreviews: boolean;
   // Notifications & background
   notifications: NotificationLevel;
+  /** Notifications without post titles or creator names. */
+  privateNotifications: boolean;
   watchIntervalMinutes: number;
   recordHistory: boolean;
   logLevel: LogLevel;
@@ -62,6 +77,11 @@ export interface Settings {
 export const ACCENTS = ['#8b7cf6', '#5aa9ff', '#3ccf91', '#f5a524', '#ff6b8b', '#22d3ee'] as const;
 
 export const WATCH_INTERVALS = [0, 60, 180, 360, 720, 1440] as const;
+
+/** Minutes before failed files are tried again by themselves (0 = never). */
+export const AUTO_RETRY_MINUTES = [0, 15, 30, 60, 120, 180] as const;
+/** Automatic retries each failed file gets. */
+export const AUTO_RETRY_LIMIT = 3;
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   language: 'auto',
@@ -80,6 +100,11 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   previewOnly: 'relay',
   saveContent: 'txt',
   saveMetadata: false,
+  saveLinks: true,
+  saveComments: false,
+  saveAnnouncements: false,
+  thumbnailFallback: true,
+  autoRetryMinutes: 30,
   categories: Object.fromEntries(FILE_CATEGORIES.map((c) => [c, true])) as Record<
     FileCategory,
     boolean
@@ -92,7 +117,10 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   panelSide: 'right',
   cardSelectors: true,
   markDownloaded: true,
+  readMarkers: true,
+  blurPreviews: false,
   notifications: 'all',
+  privateNotifications: false,
   watchIntervalMinutes: 360,
   recordHistory: true,
   logLevel: 'info',
@@ -174,6 +202,13 @@ export function coerceSettings(input: unknown): Settings {
     previewOnly: oneOf(s.previewOnly, ['relay', 'thumbnail', 'skip'] as const, d.previewOnly),
     saveContent: oneOf(s.saveContent, ['none', 'txt', 'html', 'both'] as const, d.saveContent),
     saveMetadata: bool(s.saveMetadata, d.saveMetadata),
+    saveLinks: bool(s.saveLinks, d.saveLinks),
+    saveComments: bool(s.saveComments, d.saveComments),
+    saveAnnouncements: bool(s.saveAnnouncements, d.saveAnnouncements),
+    thumbnailFallback: bool(s.thumbnailFallback, d.thumbnailFallback),
+    autoRetryMinutes: (AUTO_RETRY_MINUTES as readonly number[]).includes(Number(s.autoRetryMinutes))
+      ? Number(s.autoRetryMinutes)
+      : d.autoRetryMinutes,
     categories,
     zipMaxSizeMb: intIn(s.zipMaxSizeMb, 50, ZIP_HARD_LIMIT_MB, d.zipMaxSizeMb),
     zipVideosSeparately: bool(s.zipVideosSeparately, d.zipVideosSeparately),
@@ -187,7 +222,10 @@ export function coerceSettings(input: unknown): Settings {
     panelSide: oneOf(s.panelSide, ['right', 'left'] as const, d.panelSide),
     cardSelectors: bool(s.cardSelectors, d.cardSelectors),
     markDownloaded: bool(s.markDownloaded, d.markDownloaded),
+    readMarkers: bool(s.readMarkers, d.readMarkers),
+    blurPreviews: bool(s.blurPreviews, d.blurPreviews),
     notifications: oneOf(s.notifications, ['all', 'errors', 'none'] as const, d.notifications),
+    privateNotifications: bool(s.privateNotifications, d.privateNotifications),
     watchIntervalMinutes: (WATCH_INTERVALS as readonly number[]).includes(
       Number(s.watchIntervalMinutes),
     )

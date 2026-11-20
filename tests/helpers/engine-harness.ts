@@ -3,6 +3,7 @@ import { DownloadEngine, type DownloadSnapshot, type EngineDeps } from '../../sr
 import type { Job } from '../../src/lib/jobs/types';
 import { SiteLimiter } from '../../src/lib/net/limiter';
 import type { PawchiveClient } from '../../src/lib/pawchive/client';
+import type { Announcement, Comment } from '../../src/lib/pawchive/types';
 import type { RelayIndex } from '../../src/lib/pawchive/relay';
 import type { Post } from '../../src/lib/pawchive/types';
 import { DEFAULT_SETTINGS, type Settings } from '../../src/lib/settings';
@@ -94,6 +95,8 @@ export interface HarnessOptions {
   posts?: Post[];
   relay?: RelayIndex;
   creatorName?: string;
+  comments?: Comment[];
+  announcements?: Announcement[];
 }
 
 export function createHarness(options: HarnessOptions = {}) {
@@ -137,6 +140,8 @@ export function createHarness(options: HarnessOptions = {}) {
       },
     ),
     getRelayIndex: vi.fn(async () => options.relay ?? { byPath: new Map(), byName: new Map() }),
+    getComments: vi.fn(async () => options.comments ?? []),
+    getAnnouncements: vi.fn(async () => options.announcements ?? []),
   };
 
   const zip = {

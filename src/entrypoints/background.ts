@@ -19,7 +19,13 @@ import { SiteLimiter } from '../lib/net/limiter';
 import { PawchiveClient } from '../lib/pawchive/client';
 import { SITE_PAGE_MATCHES, SITES, SITE_IDS } from '../lib/pawchive/sites';
 import { parsePageUrl } from '../lib/pawchive/urls';
-import { DEFAULT_SETTINGS, resolveLocale, type Locale, type Settings } from '../lib/settings';
+import {
+  AUTO_RETRY_LIMIT,
+  DEFAULT_SETTINGS,
+  resolveLocale,
+  type Locale,
+  type Settings,
+} from '../lib/settings';
 import * as db from '../lib/storage/db';
 import { loadSettings, watchSettings } from '../lib/storage/settings-store';
 import {
@@ -34,6 +40,9 @@ import { localZipPort, offscreenZipPort, textObjectUrl } from '../lib/zip/hosts'
 
 const IS_FIREFOX = import.meta.env.BROWSER === 'firefox';
 const WATCH_ALARM = 'watch-check';
+const RETRY_ALARM = 'auto-retry';
+/** A media server that did not answer is skipped for this long. */
+const MEDIA_DOWN_MS = 10 * 60_000;
 const SITE_DOMAINS = SITE_IDS.flatMap((s) => SITES[s].domains);
 const POST_LINKS = SITE_DOMAINS.flatMap((d) => [
   `https://${d}/*/user/*/post/*`,
@@ -208,10 +217,12 @@ export default defineBackground({
       const failed = job.status === 'failed' || stats.failed > 0;
       if (settings.notifications === 'errors' && !failed) return;
       if (job.status === 'cancelled') return;
+      // Private notifications never show post titles or creator names.
+      const name = settings.privateNotifications ? t('notify.aDownload') : job.title;
       const title =
         job.status === 'failed'
-          ? t('notify.jobFailed', { title: job.title })
-          : t('notify.jobDone', { title: job.title });
+          ? t('notify.jobFailed', { title: name })
+          : t('notify.jobDone', { title: name });
       const message =
         job.error === 'nothing-found'
           ? t('error.nothingFound')
@@ -286,7 +297,7 @@ export default defineBackground({
           void notify(
             `watch:${Date.now()}`,
             t('notify.newPosts', { count: found }),
-            fresh.slice(0, 5).join(', '),
+            settings.privateNotifications ? '' : fresh.slice(0, 5).join(', '),
           );
         }
         broadcast({ type: 'watch', newCount: totalNew(entries) });
@@ -335,9 +346,50 @@ export default defineBackground({
       });
     }
 
+    // Failed files go back in the queue by themselves after a while (the
+    // check runs every minute; the setting decides how long they wait).
+    void browser.alarms.create(RETRY_ALARM, { periodInMinutes: 1, delayInMinutes: 1 });
+
     browser.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === WATCH_ALARM) void checkWatchlist();
+      if (alarm.name === RETRY_ALARM && settings.autoRetryMinutes > 0) {
+        engine.autoRetry(settings.autoRetryMinutes * 60_000, AUTO_RETRY_LIMIT);
+      }
     });
+
+    // ------------------------------------------------------- media servers
+
+    const mediaDown = new Map<string, number>();
+
+    /**
+     * Whether the media server behind a file URL answers, with one tiny
+     * request (the first byte), as the desktop app checks before a download.
+     */
+    async function checkMedia(url: string): Promise<{ reachable: boolean; host: string }> {
+      let host = '';
+      try {
+        host = new URL(url).hostname;
+      } catch {
+        return { reachable: true, host };
+      }
+      const until = mediaDown.get(host);
+      if (until !== undefined && until > Date.now()) return { reachable: false, host };
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10_000);
+      try {
+        await fetch(url, { headers: { Range: 'bytes=0-0' }, signal: controller.signal });
+        mediaDown.delete(host);
+        return { reachable: true, host };
+      } catch {
+        // No answer at all (timeout or refused): the server is down. Any
+        // answer, even an error status, means it is up.
+        mediaDown.set(host, Date.now() + MEDIA_DOWN_MS);
+        log.warn(`The media server ${host} does not answer`);
+        return { reachable: false, host };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
 
     // -------------------------------------------------------- context menu
 
@@ -504,6 +556,7 @@ export default defineBackground({
         }
         return { added };
       },
+      'media:check': async ({ url }) => checkMedia(url),
       'logs:list': async () => logbook.list(),
       'logs:clear': async () => {
         logbook.clear();

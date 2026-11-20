@@ -140,6 +140,12 @@
     selected = next;
   }
 
+  /** A full file of these posts, to check the media server before downloading. */
+  function probeUrl(list: readonly Post[]): string | null {
+    for (const post of list) for (const file of post.files) if (file.url) return file.url;
+    return null;
+  }
+
   function creatorInfo() {
     return { service: ref.service, id: ref.creatorId, name: creator?.name ?? ref.creatorId };
   }
@@ -155,6 +161,7 @@
         options: choiceOptions(choice),
       },
       t('toast.queuedPosts', { count: selectedPosts.length }),
+      probeUrl(selectedPosts),
     );
     busy = false;
   }
@@ -169,6 +176,7 @@
         options: choiceOptions(choice),
       },
       t('toast.queuedCreator', { name: creator?.name ?? ref.creatorId }),
+      probeUrl(posts ?? []),
     );
     busy = false;
   }
@@ -212,10 +220,10 @@
 <div class="view">
   <div class="profile">
     {#if creator}
-      <img class="banner" src={creator.bannerUrl} alt="" loading="lazy" in:fade />
+      <img class="banner blurrable" src={creator.bannerUrl} alt="" loading="lazy" in:fade />
     {/if}
     <div class="profile-row">
-      <img class="avatar" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
+      <img class="avatar blurrable" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
       <div class="who">
         <h2 class="truncate">{creator?.name ?? ref.creatorId}</h2>
         <span class="muted truncate"

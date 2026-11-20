@@ -38,6 +38,7 @@ export interface BackgroundApi {
   'watch:download-new': { req: { key: string }; res: { jobId: string } | null };
   'watch:mark-seen': { req: { key?: string; ids?: string[] }; res: null };
   'watch:import': { req: { lines: string[] }; res: { added: number } };
+  'media:check': { req: { url: string }; res: { reachable: boolean; host: string } };
   'logs:list': { req: Record<string, never>; res: LogEntry[] };
   'logs:clear': { req: Record<string, never>; res: null };
   'app:open-dashboard': { req: { tab?: string }; res: null };

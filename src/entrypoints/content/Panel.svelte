@@ -13,6 +13,7 @@
   import CreatorView from './views/CreatorView.svelte';
   import ListingView from './views/ListingView.svelte';
   import OtherView from './views/OtherView.svelte';
+  import MediaDownDialog from './MediaDownDialog.svelte';
 
   let { cards }: { cards: CardController | null } = $props();
 
@@ -109,6 +110,7 @@
       {/if}
     </section>
   {/if}
+  <MediaDownDialog />
 </aside>
 
 <style>
