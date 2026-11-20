@@ -12,17 +12,19 @@
   import DownloadsPage from './pages/DownloadsPage.svelte';
   import HistoryPage from './pages/HistoryPage.svelte';
   import WatchlistPage from './pages/WatchlistPage.svelte';
+  import FavoritesPage from './pages/FavoritesPage.svelte';
   import LogsPage from './pages/LogsPage.svelte';
   import SettingsPage from './pages/SettingsPage.svelte';
   import AboutPage from './pages/AboutPage.svelte';
 
   themeDocument();
 
-  type Route = 'downloads' | 'history' | 'watchlist' | 'logs' | 'settings' | 'about';
+  type Route = 'downloads' | 'history' | 'watchlist' | 'favorites' | 'logs' | 'settings' | 'about';
   const ROUTES: Array<{ id: Route; icon: IconName }> = [
     { id: 'downloads', icon: 'queue' },
     { id: 'history', icon: 'history' },
     { id: 'watchlist', icon: 'eye' },
+    { id: 'favorites', icon: 'star' },
     { id: 'logs', icon: 'logs' },
     { id: 'settings', icon: 'settings' },
     { id: 'about', icon: 'info' },
@@ -108,6 +110,8 @@
           <HistoryPage />
         {:else if route === 'watchlist'}
           <WatchlistPage />
+        {:else if route === 'favorites'}
+          <FavoritesPage />
         {:else if route === 'logs'}
           <LogsPage />
         {:else if route === 'settings'}

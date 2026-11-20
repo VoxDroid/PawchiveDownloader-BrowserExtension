@@ -19,6 +19,8 @@
   import DownloadFooter, { type FooterChoice } from './DownloadFooter.svelte';
   import FileTile from './FileTile.svelte';
   import LinksView from './LinksView.svelte';
+  import FavoriteStar from './FavoriteStar.svelte';
+  import { bareService, siteName, siteOfService } from '../../../lib/pawchive/sites';
   import { choiceOptions, queueJob } from './jobs';
 
   let { ref }: { ref: { service: string; creatorId: string; postId: string } } = $props();
@@ -192,10 +194,19 @@
         <h2 class="title" title={post.title}>{post.title || t('common.untitled')}</h2>
         <p class="sub truncate">
           {creator?.name ?? post.creatorId}
-          <span class="sep">/</span>{post.service}
+          <span class="sep">/</span>{bareService(post.service)}<span class="sep">/</span>{siteName(
+            siteOfService(post.service),
+          )}
           {#if post.published}<span class="sep">/</span>{fmt.date(post.published)}{/if}
         </p>
       </div>
+      <FavoriteStar
+        kind="post"
+        service={post.service}
+        creatorId={post.creatorId}
+        postId={post.id}
+        title={post.title || post.id}
+      />
     </div>
 
     <div class="tabs">

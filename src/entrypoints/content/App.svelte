@@ -3,7 +3,8 @@
   import { app, t, themed } from '../../ui/state/app.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
   import { createCardController, type CardController } from './cards';
-  import { page } from './page.svelte';
+  import { call } from '../../lib/messages';
+  import { cardKey, page } from './page.svelte';
   import Fab from './Fab.svelte';
   import Panel from './Panel.svelte';
 
@@ -45,6 +46,17 @@
       app.settings.markDownloaded && app.settings.cardSelectors,
       t('cards.downloaded'),
     );
+  });
+
+  // Read markers: remember the post this page shows, and mark the ones on lists.
+  $effect(() => {
+    const ref = page.ref;
+    if (ref.kind === 'post' && app.settings.readMarkers)
+      void call('reads:mark', { key: cardKey(ref) }).catch(() => undefined);
+  });
+  $effect(() => {
+    void page.cards.length;
+    void cards?.markRead(app.settings.readMarkers && app.settings.cardSelectors, t('cards.read'));
   });
 
   $effect(() => {

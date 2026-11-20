@@ -1,5 +1,7 @@
 import { browser } from 'wxt/browser';
 import type { AppJobAction, AppJobSummary, BridgeStatus } from './bridge';
+import type { Backup } from './backup';
+import type { Favorite } from './favorites';
 import type { Job, JobRequest, JobSummary } from './jobs/types';
 import type { JobAction } from './jobs/engine';
 import type { HistoryEntry } from './storage/db';
@@ -40,6 +42,21 @@ export interface BackgroundApi {
   'watch:mark-seen': { req: { key?: string; ids?: string[] }; res: null };
   'watch:import': { req: { lines: string[] }; res: { added: number } };
   'media:check': { req: { url: string }; res: { reachable: boolean; host: string } };
+  'reads:mark': { req: { key: string }; res: null };
+  'favorites:list': { req: Record<string, never>; res: Favorite[] };
+  'backup:create': { req: Record<string, never>; res: Backup };
+  'backup:restore': {
+    req: { text: string };
+    res: { ok: true; watch: number; favorites: number; history: number } | { ok: false };
+  };
+  'favorites:toggle': {
+    req: { favorite: Omit<Favorite, 'key' | 'addedAt' | 'note'> };
+    res: { favorite: boolean };
+  };
+  'favorites:remove': { req: { keys: string[] }; res: null };
+  'favorites:update': { req: { key: string; title?: string; note?: string }; res: null };
+  'favorites:import': { req: { text: string }; res: { added: number } };
+  'reads:known': { req: { keys: string[] }; res: string[] };
   'bridge:status': { req: Record<string, never>; res: BridgeStatus & { pairedAt: number | null } };
   'bridge:pair': { req: { code: string }; res: BridgeOutcome<BridgeStatus> };
   'bridge:unpair': { req: Record<string, never>; res: null };

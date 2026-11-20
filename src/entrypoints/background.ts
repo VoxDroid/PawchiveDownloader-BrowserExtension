@@ -18,6 +18,8 @@ import {
 import { SiteLimiter } from '../lib/net/limiter';
 import { PawchiveClient } from '../lib/pawchive/client';
 import { AppBridge, BridgeError, EMPTY_BRIDGE, type BridgeState } from '../lib/bridge';
+import { favoriteKey, parseFavorites, type Favorite } from '../lib/favorites';
+import { createBackup, parseBackup, planRestore } from '../lib/backup';
 import { SITE_PAGE_MATCHES, SITES, SITE_IDS } from '../lib/pawchive/sites';
 import { parsePageUrl } from '../lib/pawchive/urls';
 import {
@@ -28,7 +30,7 @@ import {
   type Settings,
 } from '../lib/settings';
 import * as db from '../lib/storage/db';
-import { loadSettings, watchSettings } from '../lib/storage/settings-store';
+import { loadSettings, saveSettings, watchSettings } from '../lib/storage/settings-store';
 import {
   applyCheck,
   createWatchEntry,
@@ -58,6 +60,10 @@ const jobsItem = storage.defineItem<Job[]>('local:jobs', { fallback: [] });
 const watchItem = storage.defineItem<WatchEntry[]>('local:watchlist', { fallback: [] });
 const logsItem = storage.defineItem<LogEntry[]>('local:logs', { fallback: [] });
 const bridgeItem = storage.defineItem<BridgeState>('local:bridge', { fallback: EMPTY_BRIDGE });
+const favoritesItem = storage.defineItem<Favorite[]>('local:favorites', { fallback: [] });
+/** Posts opened before, newest first (read markers). */
+const readsItem = storage.defineItem<string[]>('local:reads', { fallback: [] });
+const MAX_READS = 20_000;
 
 export default defineBackground({
   type: 'module',
@@ -588,6 +594,95 @@ export default defineBackground({
         return { added };
       },
       'media:check': async ({ url }) => checkMedia(url),
+      'reads:mark': async ({ key }) => {
+        const reads = await readsItem.getValue();
+        if (reads[0] !== key) {
+          await readsItem.setValue([key, ...reads.filter((k) => k !== key)].slice(0, MAX_READS));
+        }
+        return null;
+      },
+      'favorites:list': async () => favoritesItem.getValue(),
+      'backup:create': async () =>
+        createBackup({
+          settings: await loadSettings(),
+          watchlist: await watchItem.getValue(),
+          favorites: await favoritesItem.getValue(),
+          history: await db.listHistory(),
+          reads: await readsItem.getValue(),
+        }),
+      'backup:restore': async ({ text }) => {
+        const backup = parseBackup(text);
+        if (!backup) return { ok: false };
+        const plan = planRestore(backup, {
+          settings: await loadSettings(),
+          watchlist: await watchItem.getValue(),
+          favorites: await favoritesItem.getValue(),
+          history: await db.listHistory(),
+          reads: await readsItem.getValue(),
+        });
+        await saveSettings(plan.settings);
+        await watchItem.setValue(plan.watchlist);
+        await favoritesItem.setValue(plan.favorites);
+        for (const entry of plan.newHistory) await db.addHistory(entry);
+        await readsItem.setValue(plan.reads);
+        scheduleWatchAlarm();
+        void updateBadge();
+        log.info(
+          `Restored a backup: ${plan.report.watch} watched creators, ${plan.report.favorites} favorites, ${plan.report.history} downloads`,
+        );
+        return { ok: true, ...plan.report };
+      },
+      'favorites:toggle': async ({ favorite }) => {
+        const list = await favoritesItem.getValue();
+        const key = favoriteKey(
+          favorite.kind,
+          favorite.service,
+          favorite.creatorId,
+          favorite.postId,
+        );
+        if (list.some((f) => f.key === key)) {
+          await favoritesItem.setValue(list.filter((f) => f.key !== key));
+          return { favorite: false };
+        }
+        await favoritesItem.setValue([
+          { ...favorite, key, note: '', addedAt: Date.now() },
+          ...list,
+        ]);
+        return { favorite: true };
+      },
+      'favorites:remove': async ({ keys }) => {
+        const drop = new Set(keys);
+        await favoritesItem.setValue(
+          (await favoritesItem.getValue()).filter((f) => !drop.has(f.key)),
+        );
+        return null;
+      },
+      'favorites:update': async ({ key, title, note }) => {
+        const list = await favoritesItem.getValue();
+        await favoritesItem.setValue(
+          list.map((f) =>
+            f.key === key
+              ? {
+                  ...f,
+                  ...(title !== undefined ? { title } : {}),
+                  ...(note !== undefined ? { note } : {}),
+                }
+              : f,
+          ),
+        );
+        return null;
+      },
+      'favorites:import': async ({ text }) => {
+        const list = await favoritesItem.getValue();
+        const have = new Set(list.map((f) => f.key));
+        const fresh = parseFavorites(text).filter((f) => !have.has(f.key));
+        await favoritesItem.setValue([...fresh, ...list]);
+        return { added: fresh.length };
+      },
+      'reads:known': async ({ keys }) => {
+        const reads = new Set(await readsItem.getValue());
+        return keys.filter((k) => reads.has(k));
+      },
       'bridge:status': async () => ({
         ...(await bridge.status()),
         pairedAt: (await bridgeItem.getValue()).pairedAt ?? null,

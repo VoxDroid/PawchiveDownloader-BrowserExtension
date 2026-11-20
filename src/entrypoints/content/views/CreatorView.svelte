@@ -17,6 +17,10 @@
   import type { CardController } from '../cards';
   import { cardKey, siteClient } from '../page.svelte';
   import DownloadFooter, { type FooterChoice } from './DownloadFooter.svelte';
+  import FavoriteStar from './FavoriteStar.svelte';
+  import { bareService, siteName, siteOfService } from '../../../lib/pawchive/sites';
+  import { pageUrls } from '../../../lib/pawchive/urls';
+  import type { LinkedAccount } from '../../../lib/pawchive/types';
   import SelectionBar from './SelectionBar.svelte';
   import { choiceOptions, queueJob } from './jobs';
 
@@ -28,6 +32,7 @@
   let creator = $state<Creator | null>(null);
   let watching = $state(false);
   let watchBusy = $state(false);
+  let linked = $state<LinkedAccount[]>([]);
   let posts = $state<Post[] | null>(null);
   let scanning = $state(false);
   let scanned = $state({ pages: 0, posts: 0 });
@@ -68,6 +73,16 @@
   const activeFilters = $derived(
     [query, from, to].filter(Boolean).length + (hideDownloaded ? 1 : 0) + (onlyFiles ? 0 : 1),
   );
+
+  $effect(() => {
+    void siteClient
+      .getLinkedAccounts(ref.service, ref.creatorId)
+      .then(
+        (list) =>
+          (linked = list.filter((a) => a.id !== ref.creatorId || a.service !== ref.service)),
+      )
+      .catch(() => undefined);
+  });
 
   onMount(async () => {
     siteClient
@@ -236,11 +251,19 @@
       <div class="who">
         <h2 class="truncate">{creator?.name ?? ref.creatorId}</h2>
         <span class="muted truncate"
-          >{ref.service}{#if creator?.updated}<span class="sep">/</span>{t('creator.updated', {
+          >{bareService(ref.service)}<span class="sep">/</span>{siteName(
+            siteOfService(ref.service),
+          )}{#if creator?.updated}<span class="sep">/</span>{t('creator.updated', {
               date: fmt.date(creator.updated),
             })}{/if}</span
         >
       </div>
+      <FavoriteStar
+        kind="creator"
+        service={ref.service}
+        creatorId={ref.creatorId}
+        title={creator?.name ?? ref.creatorId}
+      />
       <Button
         size="sm"
         variant={watching ? 'subtle' : 'secondary'}
@@ -251,6 +274,18 @@
         {watching ? t('creator.watching') : t('creator.watch')}
       </Button>
     </div>
+    {#if linked.length}
+      <div class="linked">
+        {#each linked as account (account.service + account.id)}
+          <a
+            class="linked-chip"
+            href={pageUrls.creator(account.service, account.id)}
+            title={account.name}
+            >{bareService(account.service)}<span class="muted">{account.name}</span></a
+          >
+        {/each}
+      </div>
+    {/if}
   </div>
 
   {#if app.settings.cardSelectors}
@@ -583,5 +618,26 @@
     background: var(--bg-hover);
     color: var(--text);
     text-decoration: none;
+  }
+  .linked {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 14px 0;
+  }
+  .linked-chip {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: var(--fs-sm);
+    color: var(--text);
+    text-decoration: none;
+    max-width: 100%;
+  }
+  .linked-chip:hover {
+    border-color: var(--accent);
   }
 </style>

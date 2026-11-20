@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { call } from '../../../lib/messages';
   import { SITE_MATCHES } from '../../../lib/pawchive/sites';
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
@@ -105,6 +106,33 @@
     const url =
       import.meta.env.BROWSER === 'firefox' ? 'about:addons' : 'chrome://extensions/shortcuts';
     void browser.tabs.create({ url }).catch(() => toast(t('settings.shortcutsManual'), 'info'));
+  }
+
+  async function saveBackup() {
+    const backup = await call('backup:create');
+    saveTextFile(
+      `pawchive-downloader-backup-${stamp()}.json`,
+      `${JSON.stringify(backup, null, 2)}
+`,
+      'application/json',
+    );
+    toast(t('settings.backupSaved'), 'success');
+  }
+
+  async function restoreBackup() {
+    const text = await pickTextFile('.json,application/json');
+    if (text === null) return;
+    const result = await call('backup:restore', { text });
+    if (!result.ok) toast(t('settings.backupInvalid'), 'error');
+    else
+      toast(
+        t('settings.backupRestored', {
+          watch: result.watch,
+          favorites: result.favorites,
+          history: result.history,
+        }),
+        'success',
+      );
   }
 
   const sections = [
@@ -568,6 +596,10 @@
         )}>{t('common.export')}</Button
     >
     <Button size="sm" icon="import" onclick={importFile}>{t('common.import')}</Button>
+  </SettingRow>
+  <SettingRow label={t('settings.backup')} description={t('settings.backupHint')}>
+    <Button size="sm" icon="export" onclick={saveBackup}>{t('settings.backupSave')}</Button>
+    <Button size="sm" icon="import" onclick={restoreBackup}>{t('settings.backupRestore')}</Button>
   </SettingRow>
   <SettingRow label={t('settings.reset')} description={t('settings.resetHint')}>
     <Button size="sm" variant="danger" icon="restore" onclick={() => (resetOpen = true)}

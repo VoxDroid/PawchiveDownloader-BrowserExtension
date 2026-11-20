@@ -1,5 +1,6 @@
 import { call } from '../../lib/messages';
 import type { PostRef } from '../../lib/jobs/types';
+import { qualify, siteFromHost } from '../../lib/pawchive/sites';
 import { cardKey, page, toggleCard } from './page.svelte';
 
 /**
@@ -11,6 +12,7 @@ import { cardKey, page, toggleCard } from './page.svelte';
 const STYLE_ID = 'pdl-card-style';
 const CHECK = 'pdl-card-check';
 const MARK = 'pdl-card-mark';
+const READ = 'pdl-card-read';
 
 const CSS = `
 .post-card.pdl-card { position: relative; transition: transform 160ms cubic-bezier(.2,.8,.2,1), box-shadow 160ms cubic-bezier(.2,.8,.2,1); }
@@ -24,13 +26,16 @@ const CSS = `
 .pdl-selected .${CHECK} { background: var(--pdl-accent, #8b7cf6); border-color: var(--pdl-accent, #8b7cf6); }
 .pdl-selected .${CHECK} svg { stroke-dashoffset: 0; }
 .${MARK} { position: absolute; top: 8px; right: 8px; z-index: 5; padding: 2px 8px; border-radius: 99px; font: 600 11px/18px 'PDL JetBrains Mono', ui-monospace, monospace; letter-spacing: .02em; color: #fff; background: rgba(18,164,107,.92); box-shadow: 0 2px 8px rgba(0,0,0,.35); pointer-events: none; }
+.${READ} { position: absolute; bottom: 8px; right: 8px; z-index: 5; padding: 2px 8px; border-radius: 99px; font: 600 11px/18px 'PDL JetBrains Mono', ui-monospace, monospace; letter-spacing: .02em; color: #fff; background: rgba(70,76,104,.9); box-shadow: 0 2px 8px rgba(0,0,0,.35); pointer-events: none; }
 `;
 
 function cardRef(card: HTMLElement): (PostRef & { title: string }) | null {
   const { id, service, user } = card.dataset;
   if (!id || !service || !user) return null;
   const title = card.querySelector('.post-card__header')?.textContent?.trim() ?? '';
-  return { service, creatorId: user, postId: id, title };
+  // Kemono and Coomer cards name the bare service; keys carry the site.
+  const site = siteFromHost(location.hostname) ?? 'pawchive';
+  return { service: qualify(site, service), creatorId: user, postId: id, title };
 }
 
 function checkSvg(): SVGSVGElement {
@@ -48,6 +53,8 @@ export interface CardController {
   setSelecting(on: boolean): void;
   sync(): void;
   markDownloaded(enabled: boolean, label: string): Promise<void>;
+  /** Marks the posts opened before (read markers). */
+  markRead(enabled: boolean, label: string): Promise<void>;
   destroy(): void;
 }
 
@@ -134,12 +141,26 @@ export function createCardController(selectLabel: string): CardController {
         card.append(mark);
       }
     },
+    async markRead(enabled, label) {
+      for (const card of elements.values()) card.querySelector(`.${READ}`)?.remove();
+      if (!enabled || elements.size === 0) return;
+      const keys = [...elements.keys()];
+      const seen = new Set(await call('reads:known', { keys }).catch(() => [] as string[]));
+      for (const [key, card] of elements) {
+        if (!seen.has(key)) continue;
+        const mark = document.createElement('span');
+        mark.className = READ;
+        mark.textContent = label;
+        card.append(mark);
+      }
+    },
     destroy() {
       for (const card of elements.values()) {
         card.removeEventListener('click', onCardClick, true);
         card.classList.remove('pdl-card', 'pdl-selected');
         card.querySelector(`.${CHECK}`)?.remove();
         card.querySelector(`.${MARK}`)?.remove();
+        card.querySelector(`.${READ}`)?.remove();
       }
       elements.clear();
       document.documentElement.classList.remove('pdl-selecting');
