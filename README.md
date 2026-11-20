@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://ko-fi.com/izeno/shop"><img src="assets/download-button.svg" alt="Get the Pawchive Downloader browser extension for Chrome, Edge and Firefox" width="314" /></a>
+  <a href="https://ko-fi.com/izeno/shop/pawchivedownloader"><img src="assets/download-button.svg" alt="Get the Pawchive Downloader browser extension for Chrome, Edge and Firefox" width="314" /></a>
   <a href="https://ko-fi.com/izeno/shop/pawchivedownloader"><img src="assets/app-download-button.svg" alt="Download Pawchive Downloader for Windows, macOS and Linux" width="314" /></a>
 </p>
 
