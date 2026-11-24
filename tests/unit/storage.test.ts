@@ -10,6 +10,7 @@ import {
   knownPosts,
   listHistory,
   postKey,
+  presenceFrom,
   recordDownloads,
   removeHistory,
   type HistoryEntry,
@@ -67,6 +68,31 @@ describe('download database', () => {
     expect([...(await knownPosts([post, 'other']))]).toEqual([post]);
     expect([...(await knownPosts([]))]).toEqual([]);
     expect(await countKnown()).toEqual({ files: 1, posts: 1, history: 0 });
+  });
+
+  it('downloads files again that were deleted from disk', async () => {
+    await recordDownloads(
+      [
+        { hash: 'kept', post: 'p', path: 'a.png', at: 1, downloadId: 1 },
+        { hash: 'gone', post: 'p', path: 'b.png', at: 1, downloadId: 2 },
+        { hash: 'old', post: 'p', path: 'c.png', at: 1 },
+        { hash: 'cleared', post: 'p', path: 'd.png', at: 1, downloadId: 9 },
+      ],
+      [],
+    );
+    // The browser's download list: 2 was deleted, 9 was cleared from it.
+    const list = new Map([
+      [1, true],
+      [2, false],
+    ]);
+    const check = async (records: Parameters<typeof presenceFrom>[0]) =>
+      presenceFrom(records, list);
+    const all = ['kept', 'gone', 'old', 'cleared', 'never'];
+    expect([...(await knownHashes(all, check))].sort()).toEqual(['cleared', 'kept', 'old']);
+    // Without a check (or when it fails) the records alone count.
+    expect((await knownHashes(all)).size).toBe(4);
+    const broken = async () => Promise.reject(new Error('no downloads permission'));
+    expect((await knownHashes(all, broken)).size).toBe(4);
   });
 
   it('keeps history newest first and removes entries', async () => {

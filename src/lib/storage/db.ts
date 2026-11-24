@@ -12,7 +12,12 @@ export interface FileRecord {
   post: string;
   path: string;
   at: number;
+  /** The browser's download id, to ask later whether the file still exists. */
+  downloadId?: number;
 }
+
+/** Tells which recorded files are still on disk (the rest download again). */
+export type PresenceCheck = (records: FileRecord[]) => Promise<Set<string>>;
 
 export interface PostRecord {
   key: string;
@@ -99,17 +104,45 @@ function result<T>(request: IDBRequest<T>): Promise<T> {
 
 export const postKey = (ref: PostRef): string => `${ref.service}:${ref.creatorId}:${ref.postId}`;
 
-export async function knownHashes(hashes: readonly string[]): Promise<Set<string>> {
+/**
+ * Which of these files were downloaded before. With `present`, only those
+ * still on disk count: a file deleted since is downloaded again.
+ */
+export async function knownHashes(
+  hashes: readonly string[],
+  present?: PresenceCheck,
+): Promise<Set<string>> {
   const found = new Set<string>();
   if (hashes.length === 0) return found;
   const db = await openDb();
   const tx = db.transaction('files', 'readonly');
   const store = tx.objectStore('files');
+  const records: FileRecord[] = [];
   await Promise.all(
     hashes.map(async (hash) => {
-      if ((await result(store.getKey(hash))) !== undefined) found.add(hash);
+      const record = (await result(store.get(hash))) as FileRecord | undefined;
+      if (record) records.push(record);
     }),
   );
+  if (!present) return new Set(records.map((r) => r.hash));
+  return present(records).catch(() => new Set(records.map((r) => r.hash)));
+}
+
+/**
+ * The files still where the browser saved them. Extensions cannot look at
+ * the disk, but the browser's download list knows (`exists`), and searching
+ * it makes the browser check again. A file whose download was cleared from
+ * the list cannot be checked and counts as still there.
+ */
+export function presenceFrom(
+  records: readonly FileRecord[],
+  exists: ReadonlyMap<number, boolean>,
+): Set<string> {
+  const found = new Set<string>();
+  for (const record of records) {
+    const id = record.downloadId;
+    if (id === undefined || exists.get(id) !== false) found.add(record.hash);
+  }
   return found;
 }
 

@@ -8,6 +8,7 @@
   import Icon from '../../ui/components/Icon.svelte';
   import Logo from '../../ui/components/Logo.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
+  import Tooltip from '../../ui/components/Tooltip.svelte';
   import SupportCard from '../../ui/components/SupportCard.svelte';
   import DownloadsPage from './pages/DownloadsPage.svelte';
   import HistoryPage from './pages/HistoryPage.svelte';
@@ -124,6 +125,7 @@
   </main>
 </div>
 <Toaster />
+<Tooltip />
 
 <style>
   .layout {

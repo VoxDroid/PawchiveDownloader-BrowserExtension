@@ -846,13 +846,20 @@ export class DownloadEngine {
     if (!this.deps.settings().recordHistory) return;
     const at = this.now();
     const files: FileRecord[] = [];
+    const downloadId = item.downloadId;
     if (item.kind === 'file' && item.hash)
-      files.push({ hash: item.hash, post: postKey(item.post), path: item.path, at });
+      files.push({ hash: item.hash, post: postKey(item.post), path: item.path, at, downloadId });
     if (item.kind === 'zip') {
       const failed = new Set((item.failedEntries ?? []).map((f) => f.split(': ')[0]));
       for (const entry of item.entries) {
         if (entry.hash && !failed.has(entry.name))
-          files.push({ hash: entry.hash, post: postKey(item.post), path: item.path, at });
+          files.push({
+            hash: entry.hash,
+            post: postKey(item.post),
+            path: item.path,
+            at,
+            downloadId,
+          });
       }
     }
     const title = job.items.length ? job.title : '';

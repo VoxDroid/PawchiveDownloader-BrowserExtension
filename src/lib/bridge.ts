@@ -214,8 +214,25 @@ export class AppBridge {
     return { ...status, paired: true };
   }
 
+  /** Forgets the pairing here, and asks the app to forget it too. */
   async unpair(): Promise<void> {
+    const state = await this.deps.load();
+    if (state.token && state.port !== null) {
+      // Best effort: a closed app keeps the entry until it is removed there.
+      await this.request(state.port, '/v1/unpair', { method: 'POST', token: state.token }).catch(
+        () => null,
+      );
+    }
     await this.deps.save({ ...EMPTY_BRIDGE });
+  }
+
+  /**
+   * Says hello while paired, so the app can show this browser as connected.
+   * Cheap and local; does nothing when not paired.
+   */
+  async checkIn(): Promise<void> {
+    const state = await this.deps.load();
+    if (state.token) await this.status().catch(() => null);
   }
 
   /** Calls the app with the token, finding it first when needed. */

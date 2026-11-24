@@ -52,6 +52,9 @@ describe('DownloadEngine: individual files', () => {
       'Pawchive/Histy (patreon)/2026-11-17 [RE4R] EARLY ACCESS_ Neverness to Everness - Elyms [175580645]',
     );
     expect(h.recorded).toHaveLength(5);
+    // Each file keeps its browser download, to see later if it was deleted.
+    expect(h.records.every((r) => typeof r.downloadId === 'number')).toBe(true);
+    expect(new Set(h.records.map((r) => r.downloadId)).size).toBe(5);
     expect(h.onFinished).toHaveBeenCalledOnce();
     expect(h.revoked).toContain('text');
     expect(h.engine.busy).toBe(false);

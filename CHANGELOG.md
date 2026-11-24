@@ -6,6 +6,29 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Tooltips float above everything**: they are drawn once per page, above
+  every container, wrap long text and stay inside the window, like the
+  desktop app's. Before, they were part of each button and were cut off by
+  the panel and by scrolling lists, and long ones ran off the edge. On the
+  site they live in the extension's own layer, so the page cannot hide them.
+- **The desktop app shows which browser is connected**: while paired, the
+  extension checks in with the app once a minute (a local request on this
+  computer), so the app's Settings > Browser extension can show "Connected to
+  Microsoft Edge". Pairing names Brave, Opera and Vivaldi correctly instead of
+  calling them Chrome, and unpairing here removes the browser in the app too.
+
+### Fixed
+
+- **Deleted files were never downloaded again**: once a file was downloaded
+  it was skipped forever, even after it was deleted from the folder, until
+  the history was cleared. The extension now asks the browser whether each
+  file is still on disk (the browser's download list re-checks its files) and
+  downloads the missing ones again. Files whose download was cleared from the
+  browser's list cannot be checked and still count as there; files downloaded
+  before this version are treated the same way.
+
 ### Security
 
 - **Safer post text**: HTML entities in post text and file names are decoded
