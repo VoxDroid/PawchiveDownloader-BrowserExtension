@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-24
+
+Files deleted from disk are downloaded again, tooltips float above the panel
+instead of being cut off, icons sit evenly in their badges, and the desktop
+app can show which browser is connected.
+
 ### Changed
 
 - **Icons sit in the middle of their badges**: the icons were drawn as Nerd
@@ -108,5 +114,6 @@ history start fresh.
 - Request pacing that follows Pawchive's rules: at most five downloads at
   once, one new request per second, and shared cooldowns on rate limits.
 
-[Unreleased]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/releases/tag/v1.0.0
