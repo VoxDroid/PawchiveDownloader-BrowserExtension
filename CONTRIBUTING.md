@@ -55,8 +55,9 @@ pnpm test:e2e
 - TypeScript in strict mode; Svelte 5 with runes.
 - Prettier formats everything (`pnpm format`); ESLint must pass.
 - No emojis in the interface or docs. Icons come from the bundled Nerd Font:
-  add the glyph name to `src/ui/icon-names.json` and run
-  `scripts/subset-font.py` to regenerate the font and the icon map.
+  add the glyph name to `src/ui/icon-names.json`, run
+  `scripts/subset-font.py` to regenerate the font and the icon map, then
+  `scripts/icon-paths.py` for the SVG outlines the interface draws.
 - Write interface text plainly: short sentences, say what happens.
 - Respect the site: never raise the request limits in `src/lib/settings.ts`
   or bypass `SiteLimiter`.

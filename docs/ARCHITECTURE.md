@@ -85,10 +85,15 @@ uses the same cooldowns.
 - Design tokens live in `src/ui/styles/theme.css`; themes switch with
   `data-theme`, the accent with `--accent`, and `data-motion="reduced"` turns
   animations off.
-- Icons are glyphs from the bundled JetBrains Mono Nerd Font. The font is
-  subset to Latin, Greek, Cyrillic and exactly the icons named in
-  `src/ui/icon-names.json` by `scripts/subset-font.py`, which also generates
-  `src/ui/icons.generated.ts`.
+- Icons are drawn as SVG from the JetBrains Mono Nerd Font's own outlines,
+  each centered on its shape (`scripts/icon-paths.py` writes
+  `src/ui/icon-paths.generated.ts`); as font text they sat unevenly in
+  badges. The font itself is subset to Latin, Greek, Cyrillic and exactly the
+  icons named in `src/ui/icon-names.json` by `scripts/subset-font.py`, which
+  also generates `src/ui/icons.generated.ts`.
+- Tooltips (`data-tip`) are drawn by one floating `Tooltip` component per
+  page, above every container and inside the window; on the site it listens
+  in the extension's shadow root.
 - Long lists use `VirtualList` so creators with thousands of posts stay smooth.
 
 ## Translations
