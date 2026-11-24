@@ -2,7 +2,8 @@
 
 Keeps Latin, Greek and Cyrillic text plus exactly the Nerd Font icons listed
 in src/ui/icon-names.json, and writes src/ui/icons.generated.ts mapping each
-icon name to its codepoint.
+icon name to its codepoint. After adding an icon, also run
+scripts/icon-paths.py: the interface draws icons from those outlines.
 
 Usage (needs fonttools + brotli):
     python scripts/subset-font.py <dir-with-JetBrainsMonoNerdFont-*.ttf>

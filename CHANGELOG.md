@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Icons sit in the middle of their badges**: the icons were drawn as Nerd
+  Font text, whose glyphs are wider than their monospace cell, placed
+  differently each and snapped to pixel rows, so icons in round and square
+  badges looked unevenly placed. They are now drawn as SVG from the same
+  font's outlines, each centered on its own shape, with the same look and
+  size, in the popup, the settings and the panel on the site
+  (`scripts/icon-paths.py`).
 - **Tooltips float above everything**: they are drawn once per page, above
   every container, wrap long text and stay inside the window, like the
   desktop app's. Before, they were part of each button and were cut off by
