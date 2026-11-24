@@ -118,58 +118,8 @@
   border: 0;
 }
 
-/* CSS-only tooltips: <button data-tip="Label">. */
-[data-tip] {
-  position: relative;
-}
-
-[data-tip]::after {
-  content: attr(data-tip);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  transform: translate(-50%, 4px);
-  padding: 5px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-elev-3);
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  line-height: 1.3;
-  white-space: nowrap;
-  box-shadow: var(--shadow-md);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-  transition-delay: 0ms;
-  z-index: 10;
-}
-
-[data-tip]:hover::after,
-[data-tip]:focus-visible::after {
-  opacity: 1;
-  transform: translate(-50%, 0);
-  transition-delay: 350ms;
-}
-
-[data-tip-side='bottom']::after {
-  bottom: auto;
-  top: calc(100% + 8px);
-  transform: translate(-50%, -4px);
-}
-
-[data-tip-side='left']::after {
-  left: auto;
-  right: 0;
-  transform: translate(0, 4px);
-}
-
-[data-tip-side='left']:hover::after {
-  transform: translate(0, 0);
-}
+/* Tooltips (data-tip) are drawn by ui/components/Tooltip.svelte, floating
+   above every container so nothing clips them. */
 
 @keyframes pdl-fade-in {
   from {

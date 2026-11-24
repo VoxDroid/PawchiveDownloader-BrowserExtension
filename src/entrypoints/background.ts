@@ -122,6 +122,26 @@ export default defineBackground({
 
     // -------------------------------------------------------------- engine
 
+    /**
+     * Which recorded files are still on disk, from the browser's download
+     * list (see db.presenceFrom). Files deleted since download again.
+     */
+    async function stillOnDisk(records: db.FileRecord[]): Promise<Set<string>> {
+      if (!records.some((r) => r.downloadId !== undefined)) {
+        return new Set(records.map((r) => r.hash));
+      }
+      const look = async () => {
+        const list = await browser.downloads.search({ limit: 0 });
+        return new Map(list.map((d) => [d.id, d.exists !== false] as const));
+      };
+      // Searching makes the browser check its files again (Chromium at most
+      // every 10 seconds); the answer arrives a moment later, about 140 ms
+      // in tests, so look twice.
+      await look();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      return db.presenceFrom(records, await look());
+    }
+
     // The desktop app, when it runs and was paired (see lib/bridge.ts).
     const bridge = new AppBridge({
       fetch: (input, init) => fetch(input, init),
@@ -177,7 +197,7 @@ export default defineBackground({
       },
       store: { load: () => jobsItem.getValue(), save: (jobs) => jobsItem.setValue(jobs) },
       history: {
-        knownHashes: (hashes) => db.knownHashes(hashes),
+        knownHashes: (hashes) => db.knownHashes(hashes, stillOnDisk),
         record: (files, posts) => db.recordDownloads(files, posts),
         add: (entry) => db.addHistory(entry),
       },
@@ -382,15 +402,26 @@ export default defineBackground({
       if (alarm.name === RETRY_ALARM && settings.autoRetryMinutes > 0) {
         engine.autoRetry(settings.autoRetryMinutes * 60_000, AUTO_RETRY_LIMIT);
       }
+      // Once a minute while paired: lets the desktop app show this browser
+      // as connected (a local request, nothing leaves the computer).
+      if (alarm.name === RETRY_ALARM) void bridge.checkIn();
     });
 
     /** How the app lists this pairing: browser and extension name. */
     function extensionName(): string {
+      const agent = navigator.userAgent;
+      const brave = (navigator as Navigator & { brave?: unknown }).brave !== undefined;
       const browserName = IS_FIREFOX
         ? 'Firefox'
-        : /Edg\//.test(navigator.userAgent)
+        : /Edg\//.test(agent)
           ? 'Edge'
-          : 'Chrome';
+          : /OPR\//.test(agent)
+            ? 'Opera'
+            : /Vivaldi\//.test(agent)
+              ? 'Vivaldi'
+              : brave
+                ? 'Brave'
+                : 'Chrome';
       return `${browserName}: ${browser.runtime.getManifest().name}`;
     }
 
@@ -535,7 +566,9 @@ export default defineBackground({
         log.info(forgetFiles ? 'History and downloaded-file records cleared' : 'History cleared');
         return null;
       },
-      'history:known-hashes': async ({ hashes }) => [...(await db.knownHashes(hashes))],
+      'history:known-hashes': async ({ hashes }) => [
+        ...(await db.knownHashes(hashes, stillOnDisk)),
+      ],
       'history:known-posts': async ({ keys }) => [...(await db.knownPosts(keys))],
       'history:stats': () => db.countKnown(),
       'history:requeue': async ({ id }) => {

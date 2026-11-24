@@ -7,7 +7,7 @@ import type { Announcement, Comment } from '../../src/lib/pawchive/types';
 import type { RelayIndex } from '../../src/lib/pawchive/relay';
 import type { Post } from '../../src/lib/pawchive/types';
 import { DEFAULT_SETTINGS, type Settings } from '../../src/lib/settings';
-import type { HistoryEntry } from '../../src/lib/storage/db';
+import type { FileRecord, HistoryEntry } from '../../src/lib/storage/db';
 
 export interface FakeDownload {
   id: number;
@@ -105,6 +105,7 @@ export function createHarness(options: HarnessOptions = {}) {
   let saved: Job[] = options.saved ?? [];
   const history: HistoryEntry[] = [];
   const recorded: string[] = [];
+  const records: FileRecord[] = [];
   const revoked: string[] = [];
   let ids = 1;
   const posts = options.posts ?? [];
@@ -177,6 +178,7 @@ export function createHarness(options: HarnessOptions = {}) {
       knownHashes: async (hashes) => new Set(hashes.filter((h) => options.known?.includes(h))),
       record: async (files) => {
         recorded.push(...files.map((f) => f.hash));
+        records.push(...files);
       },
       add: async (entry) => {
         history.push(entry);
@@ -204,6 +206,7 @@ export function createHarness(options: HarnessOptions = {}) {
     zip,
     history,
     recorded,
+    records,
     revoked,
     settings,
     onFinished,

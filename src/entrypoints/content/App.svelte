@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { app, t, themed } from '../../ui/state/app.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
+  import Tooltip from '../../ui/components/Tooltip.svelte';
   import { createCardController, type CardController } from './cards';
   import { call } from '../../lib/messages';
   import { cardKey, page } from './page.svelte';
@@ -77,6 +78,7 @@
     <Panel {cards} />
   {/if}
   <Toaster />
+  <Tooltip />
 </div>
 
 <style>

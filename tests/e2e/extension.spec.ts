@@ -40,6 +40,36 @@ test.describe('in-page panel', () => {
     );
   });
 
+  test('tooltips in the panel are not cut off by it', async ({ context }) => {
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 1100, height: 760 });
+    await page.goto(POST_URL);
+    const ui = page.locator('pawchive-downloader');
+    await ui.locator('button.fab').click();
+    const panel = ui.getByRole('complementary', { name: 'Pawchive Downloader' });
+    await expect(panel.locator('.tile')).toHaveCount(5);
+    // The rightmost button with a tooltip, against the window's edge.
+    const anchors = panel.locator('[data-tip]');
+    let anchor = anchors.first();
+    let right = -1;
+    for (let i = 0; i < (await anchors.count()); i++) {
+      const b = await anchors.nth(i).boundingBox();
+      if (b && b.x + b.width > right) {
+        right = b.x + b.width;
+        anchor = anchors.nth(i);
+      }
+    }
+    await anchor.hover();
+    const tip = ui.locator('.tooltip.visible');
+    await expect(tip).toHaveText((await anchor.getAttribute('data-tip')) ?? '');
+    const box = (await tip.boundingBox())!;
+    expect(box.x + box.width).toBeLessThanOrEqual(1100);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    // Floats outside the panel's scroll area rather than inside it.
+    const style = await tip.evaluate((el) => getComputedStyle(el).position);
+    expect(style).toBe('fixed');
+  });
+
   test('selects posts on a creator page and loads the post list', async ({ context }) => {
     const page = await context.newPage();
     await page.goto(CREATOR_URL);
@@ -86,6 +116,23 @@ test.describe('extension pages', () => {
     await page.goto(`chrome-extension://${extensionId}/options.html#settings`);
     await page.getByRole('button', { name: 'Light' }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+
+  test('tooltips float above everything and stay inside the window', async ({
+    context,
+    extensionId,
+  }) => {
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 900, height: 700 });
+    await page.goto(`chrome-extension://${extensionId}/options.html#settings`);
+    const anchor = page.locator('[data-tip]').first();
+    await anchor.hover();
+    const tip = page.locator('.tooltip.visible');
+    await expect(tip).toHaveText((await anchor.getAttribute('data-tip')) ?? '');
+    const box = (await tip.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(900);
   });
 
   test('popup shows the empty state off site', async ({ context, extensionId }) => {

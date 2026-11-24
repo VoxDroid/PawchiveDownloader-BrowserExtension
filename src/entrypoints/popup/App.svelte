@@ -18,6 +18,7 @@
   import AppJobs from './AppJobs.svelte';
   import Logo from '../../ui/components/Logo.svelte';
   import Toaster from '../../ui/components/Toaster.svelte';
+  import Tooltip from '../../ui/components/Tooltip.svelte';
 
   themeDocument();
 
@@ -265,6 +266,7 @@
   </footer>
 </div>
 <Toaster position="top" />
+<Tooltip />
 
 <style>
   .popup {

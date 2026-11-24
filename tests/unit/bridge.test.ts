@@ -133,11 +133,36 @@ describe('pairing', () => {
     });
   });
 
-  it('forgets the pairing', async () => {
-    const { bridge, state } = setup(app());
+  it('forgets the pairing, here and in the app', async () => {
+    const fake = app();
+    const { bridge, state } = setup(fake);
     await bridge.pair('123456', 'x');
     await bridge.unpair();
     expect(state()).toEqual(EMPTY_BRIDGE);
+    const told = fake.calls.find((c) => c.url === '/v1/unpair');
+    expect(told).toMatchObject({ method: 'POST', auth: `Bearer ${'f'.repeat(64)}` });
+  });
+
+  it('forgets the pairing even when the app is closed', async () => {
+    const fake = app();
+    const { bridge, state } = setup(fake);
+    await bridge.pair('123456', 'x');
+    fake.port = null;
+    await bridge.unpair();
+    expect(state()).toEqual(EMPTY_BRIDGE);
+  });
+
+  it('checks in only while paired', async () => {
+    const fake = app();
+    const { bridge } = setup(fake);
+    await bridge.checkIn();
+    expect(fake.calls).toHaveLength(0);
+    await bridge.pair('123456', 'x');
+    fake.calls.length = 0;
+    await bridge.checkIn();
+    expect(fake.calls).toEqual([
+      { url: '/v1/hello', method: 'GET', auth: `Bearer ${'f'.repeat(64)}`, body: undefined },
+    ]);
   });
 });
 
