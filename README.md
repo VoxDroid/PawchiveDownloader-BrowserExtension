@@ -57,35 +57,35 @@ Pawchive Downloader adds a download panel to every post and creator page on Pawc
 
 **Downloading**
 
-| Feature                    | What it does                                                                                                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Three sites                | Pawchive, Kemono and Coomer, with their old kemono.su, coomer.su and .party links. Each site gets its own folder.                                               |
-| Download panel             | A floating paw button on every page opens a side panel for the post, creator or list you are viewing.                                                           |
-| File picking               | Thumbnails of every file with category filters (images, videos, audio, archives, documents, text), select all, invert, and Shift-click ranges.                  |
-| Whole creators             | Load a creator's full post list, filter by title, date range and whether posts have files, and download any selection, or everything at once.                   |
-| Selection on lists         | Tick posts directly on the site's own post cards on creator pages and search results, with Shift-click ranges.                                                  |
-| ZIP archives               | Each post becomes one archive, streamed in the browser and split into numbered parts below the ZIP size limit. Videos and very large files are saved beside it. |
-| Preview-only files         | When Pawchive only keeps a preview, the full file is fetched through the temporary link the post page offers.                                                   |
-| Post text and metadata     | Save the description as `content.txt` and/or `content.html`, plus a `post.json` with title, dates, tags and files.                                              |
-| Outside links              | Mega, Google Drive, Dropbox and other links a post shares, and its archive passwords, in a Links tab and in `links.txt`. The paired desktop app downloads them. |
-| Comments and announcements | `comments.txt` with replies under their parent, and the creator's announcements once per download.                                                              |
-| Dead media servers         | Before a Kemono or Coomer download, the media server is checked; when it is down you choose: cancel, thumbnails instead, or queue the full files.               |
-| Skip what you have         | Files are recognised by their content hash across posts and creators, so nothing downloads twice. Posts you saved get a badge on the site.                      |
-| Context menu and shortcuts | Right-click any post or creator link to download or watch it. `Alt+Shift+D` toggles the panel, `Alt+Shift+A` downloads the open post.                           |
+| Feature                    | What it does                                                                                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Three sites                | Pawchive, Kemono and Coomer, with their old kemono.su, coomer.su and .party links. Each site gets its own folder.                                                                                |
+| Download panel             | A floating paw button on every page opens a side panel for the post, creator or list you are viewing.                                                                                            |
+| File picking               | Thumbnails of every file with category filters (images, videos, audio, archives, documents, text), select all, invert, and Shift-click ranges.                                                   |
+| Whole creators             | Load a creator's full post list, filter by title, date range and whether posts have files, and download any selection, or everything at once.                                                    |
+| Selection on lists         | Tick posts directly on the site's own post cards on creator pages and search results, with Shift-click ranges.                                                                                   |
+| ZIP archives               | Each post becomes one archive, streamed in the browser and split into numbered parts below the ZIP size limit. Videos and very large files are saved beside it.                                  |
+| Preview-only files         | When Pawchive only keeps a preview, the full file is fetched through the temporary link the post page offers.                                                                                    |
+| Post text and metadata     | Save the description as `content.txt` and/or `content.html`, plus a `post.json` with title, dates, tags and files.                                                                               |
+| Outside links              | Mega, Google Drive, Dropbox and other links a post shares, and its archive passwords, in a Links tab and in `links.txt`. The paired desktop app downloads them.                                  |
+| Comments and announcements | `comments.txt` with replies under their parent, and the creator's announcements once per download.                                                                                               |
+| Dead media servers         | Before a Kemono or Coomer download, the media server is checked; when it is down you choose: cancel, thumbnails instead, or queue the full files.                                                |
+| Skip what you have         | Files are recognised by their content hash across posts and creators, so nothing downloads twice, and files you deleted from disk are downloaded again. Posts you saved get a badge on the site. |
+| Context menu and shortcuts | Right-click any post or creator link to download or watch it. `Alt+Shift+D` toggles the panel, `Alt+Shift+A` downloads the open post.                                                            |
 
 **Managing**
 
-| Feature        | What it does                                                                                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Download queue | Pause, resume, cancel and retry each job or everything at once. Live speed, progress, time left and per-file status. Jobs survive browser restarts.                       |
-| Retries        | Network and server errors retry with growing, jittered pauses; disk and permission errors stop at once. Failed files are tried again later by themselves.                 |
-| Desktop app    | Pair with Pawchive Downloader on this computer: downloads, the watchlist and the app's queue go through it while it runs, and the extension takes over when it is closed. |
-| Favorites      | Star posts and creators, keep notes, download again in one click, and move the list to the desktop app and back.                                                          |
-| Read markers   | Posts you opened before get a Seen badge on the site's lists.                                                                                                             |
-| Backup         | One file with settings, watchlist, favorites, history and read markers, restored on another browser.                                                                      |
-| History        | Every finished download with files, size, duration and errors. Search, filter, show in folder, download again, export as CSV or JSON.                                     |
-| Watchlist      | Follow creators. New posts are found on a schedule (hourly to daily), shown with a badge and a notification, and downloaded in one click or automatically.                |
-| Logs           | A searchable, filterable log of what the extension did and why, with copy and save.                                                                                       |
+| Feature        | What it does                                                                                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Download queue | Pause, resume, cancel and retry each job or everything at once. Live speed, progress, time left and per-file status. Jobs survive browser restarts.                                                                |
+| Retries        | Network and server errors retry with growing, jittered pauses; disk and permission errors stop at once. Failed files are tried again later by themselves.                                                          |
+| Desktop app    | Pair with Pawchive Downloader on this computer: downloads, the watchlist and the app's queue go through it while it runs, and the extension takes over when it is closed. The app shows this browser as connected. |
+| Favorites      | Star posts and creators, keep notes, download again in one click, and move the list to the desktop app and back.                                                                                                   |
+| Read markers   | Posts you opened before get a Seen badge on the site's lists.                                                                                                                                                      |
+| Backup         | One file with settings, watchlist, favorites, history and read markers, restored on another browser.                                                                                                               |
+| History        | Every finished download with files, size, duration and errors. Search, filter, show in folder, download again, export as CSV or JSON.                                                                              |
+| Watchlist      | Follow creators. New posts are found on a schedule (hourly to daily), shown with a badge and a notification, and downloaded in one click or automatically.                                                         |
+| Logs           | A searchable, filterable log of what the extension did and why, with copy and save.                                                                                                                                |
 
 **Interface**
 
@@ -153,7 +153,7 @@ The unpacked extensions are written to `.output/chrome-mv3` and `.output/firefox
 
 Files are saved in your browser's downloads folder, organised by the folder template (by default `<site>/<creator> (<service>)/<date> <title> [<post id>]/`, so `Kemono/...` for Kemono posts).
 
-To hand downloads to the desktop app, open **Settings > Desktop app**, then in the app open Settings > Browser extension, turn it on and press **Pair**. Enter the six-digit code in the extension and switch on **Send downloads to the app**.
+To hand downloads to the desktop app, open **Settings > Desktop app**, then in the app open Settings > Browser extension, turn it on and press **Pair a browser**. Enter the six-digit code in the extension and switch on **Send downloads to the app**. The app notices the new browser by itself, shows it as connected while the browser runs, and forgets it when you unpair here.
 
 ## The desktop app
 
