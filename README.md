@@ -89,12 +89,13 @@ Pawchive Downloader adds a download panel to every post and creator page on Pawc
 
 **Interface**
 
-| Feature   | What it does                                                                                                                                                          |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Design    | JetBrains Mono Nerd Font throughout, icons from the font itself, six themes (Midnight, Graphite, Plum, Forest, Ember, Light) plus Match system, and any accent color. |
-| Motion    | Eased transitions, springy controls and virtualized lists that stay smooth with thousands of posts. Respects reduced motion.                                          |
-| Languages | English, Japanese, Korean, Simplified Chinese, Spanish, Brazilian Portuguese, Russian, German and French, switchable live.                                            |
-| Dashboard | Downloads, history, watchlist, logs, settings and an about page in a full tab. Settings sync across your browsers.                                                    |
+| Feature      | What it does                                                                                                                                                                                                    |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Design       | JetBrains Mono Nerd Font throughout, icons drawn from the font's own outlines and centered on their shape, six themes (Midnight, Graphite, Plum, Forest, Ember, Light) plus Match system, and any accent color. |
+| Motion       | Eased transitions, springy controls and virtualized lists that stay smooth with thousands of posts. Respects reduced motion.                                                                                    |
+| Languages    | English, Japanese, Korean, Simplified Chinese, Spanish, Brazilian Portuguese, Russian, German and French, switchable live.                                                                                      |
+| Dashboard    | Downloads, history, watchlist, favorites, logs, settings and an about page in a full tab. Settings sync across your browsers.                                                                                   |
+| Privacy blur | Thumbnails, avatars and banners stay blurred until you point at them; creator pictures that cannot load show initials.                                                                                          |
 
 ## Screenshots
 
@@ -108,20 +109,20 @@ Pawchive Downloader adds a download panel to every post and creator page on Pawc
 
 ## Installation
 
-Download the package for your browser from the [latest release](https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/releases/latest).
+Get the package for your browser from the [official build on Ko-fi](https://ko-fi.com/izeno/shop/pawchivedownloader), or [build it from source](#from-source). Each official package is a zip with the extension, a `README.txt` with these steps, and the license.
 
 ### Chrome, Edge, Brave, Vivaldi and other Chromium browsers
 
-1. Download `pawchive-downloader-<version>-chrome.zip` (or `-edge.zip` for Edge) and unzip it.
+1. Unzip `PawchiveDownloader-Extension-<version>-chrome.zip` (or `-edge.zip` for Edge) somewhere you will keep: the extension runs from there.
 2. Open `chrome://extensions` (`edge://extensions` in Edge) and turn on **Developer mode**.
-3. Click **Load unpacked** and pick the unzipped folder.
+3. Click **Load unpacked** and pick the `extension` folder inside.
 4. Pin the paw icon to the toolbar.
 
-Requires Chrome 116 or newer.
+To update, replace the folder's contents with the new version and press the reload button on the extension's card. Settings, history, the watchlist and favorites are kept. Requires Chrome 116 or newer.
 
 ### Firefox
 
-The official build includes a Firefox package signed by Mozilla (`.xpi`): open it in Firefox (or drag it onto a Firefox window) and confirm. It stays installed and updates by installing the next one over it.
+`PawchiveDownloader-Extension-<version>-firefox.zip` holds a package signed by Mozilla (`.xpi`): open it in Firefox (drag it onto a Firefox window, or use **about:addons > gear menu > Install Add-on From File**) and confirm. It stays installed; to update, install the newer `.xpi` the same way.
 
 A build made from source is unsigned: open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on** and pick its zip. Temporary add-ons are removed when Firefox restarts.
 
@@ -193,16 +194,17 @@ Every value is cleaned so names are valid on Windows, macOS and Linux: reserved 
 
 ## Settings
 
-| Area         | Settings                                                                                                                                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Appearance   | Language, theme, accent color, animations                                                                                                                                                                                                  |
-| Desktop app  | Pairing with Pawchive Downloader, sending downloads to it                                                                                                                                                                                  |
-| Downloads    | Default format, simultaneous downloads (1 to 5), time between requests, retries, what to do when a file exists, skip downloaded files, preview-only files (temporary link, preview image or skip), post text, metadata, default file types |
-| File names   | Folder, file and ZIP templates with presets and a token reference                                                                                                                                                                          |
-| ZIP archives | Largest archive (split above it), save videos beside the archive, save files above a size separately                                                                                                                                       |
-| On Pawchive  | Floating button and its corner, panel side, selection on post lists, saved-post badges                                                                                                                                                     |
-| Background   | Notifications, watchlist check interval, history recording, log level                                                                                                                                                                      |
-| Data         | Export and import settings, reset to defaults                                                                                                                                                                                              |
+| Area               | Settings                                                                                                                                                                                                                                                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Appearance         | Language, theme, accent color, animations, blur previews                                                                                                                                                                                                                                                               |
+| Downloads          | Default format, simultaneous downloads (1 to 5), time between requests, retries, automatic retries, what to do when a file exists, skip downloaded files, preview-only files (temporary link, preview image or skip), thumbnail fallback, post text, metadata, links file, comments, announcements, default file types |
+| File names         | Folder, file and ZIP templates with presets and a token reference                                                                                                                                                                                                                                                      |
+| ZIP archives       | Largest archive (split above it), save videos beside the archive, save files above a size separately                                                                                                                                                                                                                   |
+| On Pawchive        | Floating button and its corner, panel side, selection on post lists, saved-post badges, read markers                                                                                                                                                                                                                   |
+| Background         | Notifications, watchlist check interval, history recording, log level                                                                                                                                                                                                                                                  |
+| Desktop app        | Pairing with Pawchive Downloader, sending downloads to it                                                                                                                                                                                                                                                              |
+| Keyboard shortcuts | The panel and download shortcuts, and a button to change them in the browser                                                                                                                                                                                                                                           |
+| Data               | Export and import settings (a file that is not settings is refused), full backup and restore, reset to defaults                                                                                                                                                                                                        |
 
 ## Privacy and politeness
 
@@ -240,7 +242,7 @@ src/
     background.ts        Download engine host, messaging, watchlist, menus, badge
     content/             In-page panel (Svelte, shadow DOM) and post card selection
     popup/               Toolbar popup
-    options/             Dashboard: downloads, history, watchlist, logs, settings, about
+    options/             Dashboard: downloads, history, watchlist, favorites, logs, settings, about
     offscreen/           Chrome-only helper that builds ZIP archives
   lib/
     pawchive/            URLs, API client, normalization, relay links

@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-25
+
+Reliability fixes from a full audit: a failed first watchlist check no longer
+floods you with "new" posts, posts that could not be loaded are retried
+instead of lost, a wrong file picked as settings no longer resets them, and
+a pairing removed in the desktop app is noticed.
+
 ### Fixed
 
 - **A failed first watchlist check no longer floods you with "new" posts**:
@@ -142,6 +149,7 @@ history start fresh.
 - Request pacing that follows Pawchive's rules: at most five downloads at
   once, one new request per second, and shared cooldowns on rate limits.
 
-[Unreleased]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/VoxDroid/PawchiveDownloader-BrowserExtension/releases/tag/v1.0.0
