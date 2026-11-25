@@ -49,6 +49,21 @@ describe('watchlist', () => {
     expect(markSeen(entry).newPosts).toEqual([]);
   });
 
+  it('takes the baseline on the first good check when earlier ones failed', () => {
+    // What a failed check leaves behind.
+    const failed = {
+      ...createWatchEntry('patreon', '1', 'Histy', 100),
+      lastCheckedAt: 150,
+      error: 'offline',
+    };
+    const first = applyCheck(failed, [post('3'), post('2'), post('1')], 200);
+    expect(first.found).toEqual([]);
+    expect(applyCheck(first.entry, [post('4'), post('3')], 300).found).toHaveLength(1);
+    // A creator without posts yet: their first post is new.
+    const empty = applyCheck(createWatchEntry('patreon', '2', 'New', 100), [], 200).entry;
+    expect(applyCheck(empty, [post('1')], 300).found).toHaveLength(1);
+  });
+
   it('bounds the list of seen posts', () => {
     const many = Array.from({ length: SEEN_LIMIT + 50 }, (_, i) => post(String(i)));
     const { entry } = applyCheck(createWatchEntry('p', '1', 'x'), many);

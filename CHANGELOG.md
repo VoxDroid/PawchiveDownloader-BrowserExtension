@@ -6,6 +6,34 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **A failed first watchlist check no longer floods you with "new" posts**:
+  when the first check of a creator failed (offline, the site down), the next
+  good one reported their whole first page as new, and with automatic
+  download on, downloaded it all. It now takes the starting point instead.
+- **Posts that could not be loaded are not lost**: when none of the posts of
+  a download could be loaded (offline, the site down), it finished as
+  "nothing found" and Retry could do nothing; new posts of a watched creator
+  were lost that way. It now fails, and Retry looks them up again.
+- **Importing a file that is not settings no longer resets everything**: a
+  backup or favorites file picked by mistake reset every setting to its
+  default. It is now refused, and a settings file from an older version keeps
+  the settings it does not name.
+- **A download removed from the browser's list no longer blocks the queue**:
+  its file stayed "downloading" for good and held one of the download slots.
+- **Removed in the desktop app, paired here no more**: when the app no longer
+  knows this browser, the extension says so ("Pair again in Settings")
+  instead of claiming the app is not running, and forgets the old pairing.
+- **A post with nothing to save says so**: no file picked and "Save post
+  text" unticked no longer queues an empty download.
+- **Creator pictures that cannot load show initials** on a color made from
+  the name, and a missing banner no longer shows a broken-image symbol.
+- **Search fields show focus around the whole field**, clear button
+  included, not around the text only.
+- **The same message shows once** instead of stacking copies.
+- Messages to the background are matched to its own handlers only.
+
 ## [1.1.0] - 2026-11-24
 
 Files deleted from disk are downloaded again, tooltips float above the panel

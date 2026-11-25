@@ -6,6 +6,7 @@
   import { watchKey } from '../../../lib/watch';
   import { app, fmt, t } from '../../../ui/state/app.svelte';
   import { toast } from '../../../ui/state/toasts.svelte';
+  import Avatar from '../../../ui/components/Avatar.svelte';
   import Button from '../../../ui/components/Button.svelte';
   import Checkbox from '../../../ui/components/Checkbox.svelte';
   import Empty from '../../../ui/components/Empty.svelte';
@@ -244,10 +245,23 @@
 <div class="view">
   <div class="profile">
     {#if creator}
-      <img class="banner blurrable" src={creator.bannerUrl} alt="" loading="lazy" in:fade />
+      <!-- A creator without a banner: no broken-image symbol, just the color. -->
+      <img
+        class="banner blurrable"
+        src={creator.bannerUrl}
+        alt=""
+        loading="lazy"
+        in:fade
+        onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
+      />
     {/if}
     <div class="profile-row">
-      <img class="avatar blurrable" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
+      <Avatar
+        src={creator?.iconUrl}
+        name={creator?.name ?? ref.creatorId}
+        size={46}
+        radius="12px"
+      />
       <div class="who">
         <h2 class="truncate">{creator?.name ?? ref.creatorId}</h2>
         <span class="muted truncate"
@@ -470,15 +484,6 @@
     align-items: center;
     gap: 12px;
     padding: 12px;
-  }
-  .avatar {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    object-fit: cover;
-    background: var(--bg-elev-2);
-    border: 1px solid var(--border-strong);
-    flex: none;
   }
   .who {
     display: grid;

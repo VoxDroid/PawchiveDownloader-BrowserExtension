@@ -5,6 +5,7 @@ import { commonFolder } from '../../src/lib/jobs/engine';
 import { DEFAULT_JOB_OPTIONS } from '../../src/lib/jobs/plan';
 import type { FileItem, Job } from '../../src/lib/jobs/types';
 import { normalizePost } from '../../src/lib/pawchive/normalize';
+import type { Post } from '../../src/lib/pawchive/types';
 import { parseRelayLinks } from '../../src/lib/pawchive/relay';
 import relayHtml from '../fixtures/post-preview-only.html?raw';
 import { createHarness, settle } from '../helpers/engine-harness';
@@ -136,6 +137,24 @@ describe('DownloadEngine: individual files', () => {
     expect(h.engine.get(id)!.items[0]!.status).toBe('cancelled');
   });
 
+  it('does not wait for ever on a download removed from the browser', async () => {
+    const h = createHarness({ settings: { saveContent: 'none', concurrency: 1 } });
+    await h.engine.init();
+    const id = await h.engine.create({
+      kind: 'posts',
+      creator,
+      posts: [{ post, fileIndexes: [1, 2] }],
+    });
+    await settle();
+    const first = h.downloads.running[0]!.id;
+    h.downloads.remove(first);
+    await settle();
+    expect(h.engine.get(id)!.items[0]!.status).toBe('cancelled');
+    // The slot is free again: the next file starts.
+    expect(h.downloads.running).toHaveLength(1);
+    expect(h.downloads.running[0]!.id).not.toBe(first);
+  });
+
   it('skips files already downloaded', async () => {
     const known = post.files.map((f) => f.hash!).slice(0, 4);
     const h = createHarness({ known, settings: { saveContent: 'none' } });
@@ -211,6 +230,26 @@ describe('DownloadEngine: looking up posts', () => {
     expect(job.creator?.name).toBe('Histy');
     expect(job.items).toHaveLength(5);
     expect(job.scan).toMatchObject({ posts: 2, matched: 1 });
+  });
+
+  it('fails and can be retried when none of the posts could be loaded', async () => {
+    const loaded: Post[] = [];
+    const h = createHarness({ posts: loaded, settings: { saveContent: 'none' } });
+    await h.engine.init();
+    const id = await h.engine.create({
+      kind: 'refs',
+      refs: [{ service: 'patreon', creatorId: '2581747', postId: post.id }],
+    });
+    await settle();
+    // The site was down: a failure, not "nothing found", and the request is kept.
+    expect(h.engine.get(id)).toMatchObject({ status: 'failed' });
+    expect(h.engine.get(id)!.request).toBeDefined();
+    // Back up: Retry looks the post up again and downloads it.
+    loaded.push(post);
+    await h.engine.act(id, 'retry');
+    await settle();
+    expect(h.engine.get(id)!.items).toHaveLength(5);
+    expect(h.engine.get(id)!.status).toBe('running');
   });
 
   it('resolves a creator, keeping only the wanted and newer posts', async () => {

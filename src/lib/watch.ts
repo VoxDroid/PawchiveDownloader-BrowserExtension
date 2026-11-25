@@ -58,7 +58,11 @@ export function applyCheck(
   now = Date.now(),
 ): { entry: WatchEntry; found: NewPost[] } {
   const seen = new Set(entry.seenIds);
-  const baseline = entry.lastCheckedAt === null && entry.seenIds.length === 0;
+  // No good check yet: never checked, or every check so far failed (offline,
+  // the site down). A failed first check must not turn the next good one
+  // into "the whole first page is new".
+  const baseline =
+    entry.seenIds.length === 0 && (entry.lastCheckedAt === null || entry.error !== null);
   const found: NewPost[] = baseline
     ? []
     : page

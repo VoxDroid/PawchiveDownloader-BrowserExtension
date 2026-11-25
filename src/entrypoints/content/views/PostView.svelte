@@ -7,6 +7,7 @@
   import type { Creator, FileCategory, Post } from '../../../lib/pawchive/types';
   import { app, fmt, t } from '../../../ui/state/app.svelte';
   import { toast } from '../../../ui/state/toasts.svelte';
+  import Avatar from '../../../ui/components/Avatar.svelte';
   import Button from '../../../ui/components/Button.svelte';
   import Chip from '../../../ui/components/Chip.svelte';
   import Empty from '../../../ui/components/Empty.svelte';
@@ -136,8 +137,13 @@
 
   async function download(choice: FooterChoice, indexes?: number[]) {
     if (!post) return;
-    busy = true;
     const fileIndexes = indexes ?? [...selected].sort((a, b) => a - b);
+    // No file picked and the text unticked: there is nothing to save.
+    if (!fileIndexes.length && !choice.saveText) {
+      toast(t('post.nothingToSave'), 'warning');
+      return;
+    }
+    busy = true;
     await queueJob(
       {
         kind: 'posts',
@@ -189,7 +195,12 @@
     <div class="loading"><Spinner size={22} /><span>{t('post.loading')}</span></div>
   {:else}
     <div class="intro" in:fade={{ duration: 200 }}>
-      <img class="avatar blurrable" src={creator?.iconUrl ?? ''} alt="" loading="lazy" />
+      <Avatar
+        src={creator?.iconUrl}
+        name={creator?.name ?? post.creatorId}
+        size={44}
+        radius="12px"
+      />
       <div class="meta">
         <h2 class="title" title={post.title}>{post.title || t('common.untitled')}</h2>
         <p class="sub truncate">
@@ -353,15 +364,6 @@
     display: flex;
     gap: 12px;
     align-items: center;
-  }
-  .avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    object-fit: cover;
-    background: var(--bg-elev-2);
-    border: 1px solid var(--border);
-    flex: none;
   }
   .meta {
     min-width: 0;

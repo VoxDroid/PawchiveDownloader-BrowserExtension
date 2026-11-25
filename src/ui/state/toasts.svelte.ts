@@ -25,6 +25,13 @@ export function toast(
   options: { action?: Toast['action']; duration?: number } = {},
 ): number {
   const id = nextId++;
+  // The same message again (a button pressed twice) replaces the one on show
+  // instead of stacking copies of it.
+  for (let i = toasts.length - 1; i >= 0; i--) {
+    const shown = toasts[i];
+    if (shown?.message === message && shown.kind === kind && !shown.action && !options.action)
+      toasts.splice(i, 1);
+  }
   toasts.push({ id, kind, message, action: options.action });
   if (toasts.length > 4) toasts.splice(0, toasts.length - 4);
   const duration = options.duration ?? (kind === 'error' ? 7000 : 4000);

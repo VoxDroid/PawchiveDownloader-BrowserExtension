@@ -53,7 +53,12 @@ export async function queueJob(
         toast(sent.duplicate ? t('bridge.sentDuplicate') : t('bridge.sent'), 'success');
         return true;
       }
-      toast(t('bridge.fallback'), 'info');
+      toast(
+        sent && !sent.ok && sent.code === 'not-paired'
+          ? t('bridge.fallbackUnpaired')
+          : t('bridge.fallback'),
+        'info',
+      );
     }
     await call('jobs:create', { request: checked });
     toast(message, 'success', {

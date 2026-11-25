@@ -212,6 +212,7 @@ export default defineBackground({
         delta.error?.current,
       );
     });
+    browser.downloads.onErased.addListener((id) => engine.onDownloadErased(id));
 
     // Keep the worker alive and progress fresh while something downloads.
     let heartbeat: ReturnType<typeof setInterval> | null = null;
@@ -784,6 +785,8 @@ export default defineBackground({
         return true;
       }
       const request = msg as BackgroundRequest;
+      // Only the handlers above: not `constructor` or `toString` of the object.
+      if (typeof request?.type !== 'string' || !Object.hasOwn(handlers, request.type)) return false;
       const handler = handlers[request.type as keyof BackgroundApi] as
         Handler<keyof BackgroundApi> | undefined;
       if (!handler) return false;

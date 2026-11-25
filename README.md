@@ -153,7 +153,7 @@ The unpacked extensions are written to `.output/chrome-mv3` and `.output/firefox
 
 Files are saved in your browser's downloads folder, organised by the folder template (by default `<site>/<creator> (<service>)/<date> <title> [<post id>]/`, so `Kemono/...` for Kemono posts).
 
-To hand downloads to the desktop app, open **Settings > Desktop app**, then in the app open Settings > Browser extension, turn it on and press **Pair a browser**. Enter the six-digit code in the extension and switch on **Send downloads to the app**. The app notices the new browser by itself, shows it as connected while the browser runs, and forgets it when you unpair here.
+To hand downloads to the desktop app, open **Settings > Desktop app**, then in the app open Settings > Browser extension, turn it on and press **Pair a browser**. Enter the six-digit code in the extension and switch on **Send downloads to the app**. The app notices the new browser by itself, shows it as connected while the browser runs, and forgets it when you unpair here. Remove the browser in the app instead and the extension notices on its next download, says so, and offers to pair again.
 
 ## The desktop app
 

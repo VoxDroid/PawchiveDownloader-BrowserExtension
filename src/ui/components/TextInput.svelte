@@ -110,6 +110,10 @@
     font-size: var(--fs-md);
     color: var(--text);
   }
+  /* The whole field shows focus (with its clear button), not only the text. */
+  input:focus-visible {
+    box-shadow: none;
+  }
   input::placeholder {
     color: var(--text-faint);
   }
