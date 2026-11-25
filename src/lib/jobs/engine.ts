@@ -363,6 +363,7 @@ export class DownloadEngine {
       if (request.kind === 'refs') {
         job.scan = { pages: 0, posts: 0, matched: 0 };
         const creators = new Map<string, CreatorInfo>();
+        let lastError: unknown = null;
         for (const ref of request.refs) {
           try {
             posts.push(
@@ -370,12 +371,17 @@ export class DownloadEngine {
             );
           } catch (error) {
             if (controller.signal.aborted) throw error;
+            lastError = error;
             log.warn(`Could not load post ${ref.postId}`, error);
           }
           job.scan.posts += 1;
           job.scan.matched = posts.length;
           this.deps.onChange();
         }
+        // None could be loaded (offline, the site down): fail and keep the
+        // request, so Retry looks them up again. Finishing as "nothing found"
+        // would lose them, such as new posts of a watched creator.
+        if (posts.length === 0 && lastError !== null) throw lastError;
         const ids = new Set(posts.map((p) => `${p.service}:${p.creatorId}`));
         if (ids.size === 1 && posts[0] && !job.creator) {
           const first = posts[0];
@@ -747,14 +753,33 @@ export class DownloadEngine {
           resolve(state);
         },
       });
-      // The download may have finished before the listener was attached.
-      void this.deps.downloads.get(downloadId).then((state) => {
-        if (state && state.state !== 'in_progress') this.waiters.get(downloadId)?.resolve(state);
-        else if (state) {
-          item.bytes = state.bytesReceived;
-          item.totalBytes = state.totalBytes;
-        }
-      });
+      // The download may have finished before the listener was attached,
+      // or be gone already (removed from the browser's list).
+      void this.deps.downloads.get(downloadId).then(
+        (state) => {
+          if (!state) this.onDownloadErased(downloadId);
+          else if (state.state !== 'in_progress') this.waiters.get(downloadId)?.resolve(state);
+          else {
+            item.bytes = state.bytesReceived;
+            item.totalBytes = state.totalBytes;
+          }
+        },
+        () => this.onDownloadErased(downloadId),
+      );
+    });
+  }
+
+  /**
+   * A download removed from the browser's list while the engine waited on
+   * it: without this its item would stay active for good and hold a slot.
+   */
+  onDownloadErased(id: number): void {
+    this.waiters.get(id)?.resolve({
+      id,
+      state: 'interrupted',
+      bytesReceived: 0,
+      totalBytes: 0,
+      error: 'USER_CANCELED',
     });
   }
 
@@ -966,6 +991,7 @@ export class DownloadEngine {
         if (job.request) {
           job.status = 'resolving';
           job.error = undefined;
+          job.finishedAt = undefined;
           void this.resolve(job);
           break;
         }

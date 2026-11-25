@@ -191,13 +191,17 @@ describe('using the app', () => {
 
   it('needs pairing, and notices when the app forgot it', async () => {
     const fake = app();
-    const { bridge } = setup(fake);
+    const { bridge, state } = setup(fake);
     await expect(bridge.send({ kind: 'refs', refs: [] })).rejects.toMatchObject({
       code: 'not-paired',
     });
     await bridge.pair('123456', 'x');
     fake.token = 'revoked-in-the-app';
     await expect(bridge.jobs()).rejects.toMatchObject({ code: 'not-paired' });
+    // The dead pairing is forgotten, so Settings offers to pair again; the
+    // app is still known to run on its port.
+    expect(state()).toMatchObject({ token: null, pairedAt: null, port: 49517 });
+    expect(await bridge.status()).toMatchObject({ running: true, paired: false });
   });
 
   it('finds the app again after it restarted on another port', async () => {

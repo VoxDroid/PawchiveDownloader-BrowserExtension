@@ -34,11 +34,25 @@ export function exportSettings(settings: Settings): string {
   return `${JSON.stringify({ app: 'pawchive-downloader', version: 1, settings }, null, 2)}\n`;
 }
 
-export function parseSettingsFile(text: string): Settings {
+/**
+ * The settings in an exported file, laid over `current`: what the file does
+ * not name (a setting newer than the file) stays as it is. Throws when the
+ * file is not settings (a backup, a favorites list), which would otherwise
+ * reset every setting to its default.
+ */
+export function parseSettingsFile(text: string, current: Settings = DEFAULT_SETTINGS): Settings {
   const parsed: unknown = JSON.parse(text);
   const body =
     parsed && typeof parsed === 'object' && 'settings' in parsed
       ? (parsed as { settings: unknown }).settings
       : parsed;
-  return coerceSettings(body);
+  if (
+    !body ||
+    typeof body !== 'object' ||
+    Array.isArray(body) ||
+    !Object.keys(body).some((key) => key in DEFAULT_SETTINGS)
+  ) {
+    throw new Error('Not a settings file');
+  }
+  return coerceSettings({ ...current, ...body });
 }

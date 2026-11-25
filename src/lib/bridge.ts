@@ -256,7 +256,13 @@ export class AppBridge {
         throw new BridgeError('network');
       });
     }
-    if (response.status === 401) throw new BridgeError('not-paired');
+    if (response.status === 401) {
+      // The app forgot this browser (removed in its Settings): forget the
+      // pairing here too, so the options page offers to pair again.
+      const now = await this.deps.load();
+      if (now.token === state.token) await this.deps.save({ ...now, token: null, pairedAt: null });
+      throw new BridgeError('not-paired');
+    }
     if (response.status === 403) throw new BridgeError('forbidden');
     if (response.status === 400) throw new BridgeError('unknown-action');
     if (!response.ok) throw new BridgeError('http', `HTTP ${response.status}`);

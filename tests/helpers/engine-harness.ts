@@ -83,6 +83,13 @@ export class FakeDownloads {
     this.engine.onDownloadChanged(id, 'interrupted', error);
   }
 
+  /** Removed from the browser's list, as "Remove from list" does. */
+  remove(id: number): void {
+    const index = this.all.findIndex((d) => d.id === id);
+    if (index >= 0) this.all.splice(index, 1);
+    this.engine.onDownloadErased(id);
+  }
+
   finishAll(): void {
     for (const d of this.running) this.finish(d.id);
   }

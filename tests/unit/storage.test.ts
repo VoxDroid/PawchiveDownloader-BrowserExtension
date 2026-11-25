@@ -153,5 +153,15 @@ describe('settings storage', () => {
     expect(parseSettingsFile(text).theme).toBe('ember');
     expect(parseSettingsFile('{"theme":"light"}').theme).toBe('light');
     expect(() => parseSettingsFile('not json')).toThrow();
+    // Another kind of file is refused instead of resetting everything.
+    expect(() => parseSettingsFile('{"format":"pawchive-backup","favorites":[]}')).toThrow();
+    expect(() => parseSettingsFile('[1, 2]')).toThrow();
+    expect(() => parseSettingsFile('{"settings": []}')).toThrow();
+    // What the file does not name keeps its current value.
+    const current = { ...DEFAULT_SETTINGS, concurrency: 5, theme: 'plum' as const };
+    expect(parseSettingsFile('{"theme":"light"}', current)).toMatchObject({
+      theme: 'light',
+      concurrency: 5,
+    });
   });
 });

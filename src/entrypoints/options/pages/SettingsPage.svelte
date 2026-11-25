@@ -89,7 +89,7 @@
     const text = await pickTextFile('.json,application/json');
     if (!text) return;
     try {
-      await saveSettings(parseSettingsFile(text));
+      await saveSettings(parseSettingsFile(text, $state.snapshot(app.settings)));
       toast(t('settings.imported'), 'success');
     } catch {
       toast(t('settings.importFailed'), 'error');
