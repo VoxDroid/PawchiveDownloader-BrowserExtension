@@ -1,7 +1,7 @@
 {
   "name": "pawchive-downloader",
   "description": "Download posts, attachments and whole creators from Pawchive, Kemono and Coomer, right in your browser.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "license": "MIT",

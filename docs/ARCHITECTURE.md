@@ -24,15 +24,19 @@ Chrome, Edge and Firefox packages.
                                       +------------------------------------+
 ```
 
-- **Content script** (`src/entrypoints/content`). Runs on `pawchive.pw`,
-  mounts the panel in a shadow root so the site's styles cannot leak in, and
+- **Content script** (`src/entrypoints/content`). Runs on Pawchive, Kemono
+  and Coomer (current and old domains), mounts the panel in a shadow root so the site's styles cannot leak in, and
   reads the API from the page's own origin so requests carry the user's
   session. It also adds selection boxes and "Saved" badges to the site's
   `article.post-card` elements.
 - **Background** (`src/entrypoints/background.ts`). Owns the download engine,
   routes typed messages (`src/lib/messages.ts`), pushes live job summaries to
   every open UI over a port, checks the watchlist on an alarm, and maintains
-  context menus, keyboard commands, the badge and notifications.
+  context menus, keyboard commands, the badge and notifications. Messages
+  reach only its own handlers. With the desktop app paired, `src/lib/bridge.ts`
+  hands jobs to the app on `127.0.0.1` instead (see the app's `docs/BRIDGE.md`);
+  when the app answers that it no longer knows this browser, the pairing is
+  forgotten here too.
 - **Offscreen document** (`src/entrypoints/offscreen`). Chrome's service
   worker cannot create object URLs, so ZIP archives are built in an offscreen
   page. Before each request it asks the background to pace it, so one limiter
@@ -47,12 +51,16 @@ Chrome, Edge and Firefox packages.
 2. The engine resolves references and creators through `PawchiveClient`,
    then `planPost` (`src/lib/jobs/plan.ts`) turns each post into items: one per
    file, a ZIP item, and text items for `content.txt`, `content.html` and
-   `post.json`. Files already downloaded (by content hash) are skipped.
+   `post.json`. Files already downloaded (by content hash) are skipped. When
+   none of the posts can be loaded (offline, the site down), the job fails and
+   keeps its request, so Retry looks them up again.
 3. `pump()` starts pending items up to the concurrency setting. Each file
    waits for a `SiteLimiter` slot, then goes to `browser.downloads`. Preview-
    only files first look up their temporary relay link on the post page.
-4. `downloads.onChanged` settles items. Network and server errors retry with
-   jittered backoff and slow the whole site down; fatal errors fail at once.
+4. `downloads.onChanged` settles items (and `downloads.onErased`, when a
+   download is removed from the browser's list). Network and server errors
+   retry with jittered backoff and slow the whole site down; fatal errors fail
+   at once.
 5. When nothing is pending, the job is finished, recorded in IndexedDB
    history, and a notification is shown.
 
